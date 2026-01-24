@@ -1,4 +1,18 @@
+(() => {
+  if (window.__alcoholTrackerInitialized) {
+    console.warn('Alcohol Tracker is al geïnitialiseerd; dubbele scriptload genegeerd.');
+    return;
+  }
+  window.__alcoholTrackerInitialized = true;
 
+// Supabase initialisatie
+let supabase;
+
+// Controleer of Supabase is geconfigureerd
+if (typeof SUPABASE_URL !== 'undefined' && SUPABASE_URL !== 'YOUR_SUPABASE_URL' && 
+    typeof SUPABASE_ANON_KEY !== 'undefined' && SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY') {
+  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+} else {
 const entryForm = document.getElementById("entryForm");
 const entryDate = document.getElementById("entryDate");
 const entryName = document.getElementById("entryName");
@@ -12,6 +26,15 @@ const averagePerDay = document.getElementById("averagePerDay");
 const totalRecorded = document.getElementById("totalRecorded");
 const topDay = document.getElementById("topDay");
 const clearData = document.getElementById("clearData");
+const authForm = document.getElementById("authForm");
+const authEmail = document.getElementById("authEmail");
+const authPassword = document.getElementById("authPassword");
+const authSubmitBtn = document.getElementById("authSubmitBtn");
+const authSwitchBtn = document.getElementById("authSwitchBtn");
+const authError = document.getElementById("authError");
+const userInfo = document.getElementById("userInfo");
+const userEmail = document.getElementById("userEmail");
+const logoutBtn = document.getElementById("logoutBtn");
 
 const formatNumber = (value) => value.toLocaleString("nl-NL", {
   minimumFractionDigits: 0,
@@ -84,6 +107,125 @@ const formatMonthYear = (year, month) => {
   });
 };
 
+// Authenticatie functies
+const showAuthError = (message) => {
+  authError.textContent = message;
+  authError.style.display = 'block';
+};
+
+const hideAuthError = () => {
+  authError.style.display = 'none';
+};
+
+const showAuthModal = () => {
+  authModal.style.display = 'flex';
+  authEmail.focus();
+};
+
+const hideAuthModal = () => {
+  authModal.style.display = 'none';
+  authForm.reset();
+  hideAuthError();
+};
+
+const checkAuth = async () => {
+  if (!supabase) {
+    showAuthModal();
+    return;
+  }
+
+  const { data: { session } } = await supabase.auth.getSession();
+  
+  if (session) {
+    // Gebruiker is ingelogd
+    userEmail.textContent = session.user.email;
+    userInfo.style.display = 'flex';
+    hideAuthModal();
+    await loadEntries();
+    await setupRealtime();
+  } else {
+    // Gebruiker is niet ingelogd
+    userInfo.style.display = 'none';
+    showAuthModal();
+  }
+};
+
+const handleAuth = async (e) => {
+  e.preventDefault();
+  hideAuthError();
+
+  if (!supabase) {
+    showAuthError('Supabase is niet geconfigureerd. Controleer supabase-config.local.js');
+    return;
+  }
+
+  const email = authEmail.value.trim();
+  const password = authPassword.value.trim();
+
+  if (!email || !password) {
+    showAuthError('Vul email en wachtwoord in');
+    return;
+  }
+
+  authSubmitBtn.disabled = true;
+  authSubmitBtn.textContent = isSignUp ? 'Registreren...' : 'Inloggen...';
+
+  try {
+    if (isSignUp) {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
+      if (data.user && !data.session) {
+        showAuthError('Controleer je email voor de verificatielink');
+      } else {
+        hideAuthModal();
+        await checkAuth();
+      }
+    } else {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
+      hideAuthModal();
+      await checkAuth();
+    }
+  } catch (error) {
+    showAuthError(error.message || 'Er is een fout opgetreden');
+  } finally {
+    authSubmitBtn.disabled = false;
+    authSubmitBtn.textContent = isSignUp ? 'Registreer' : 'Inloggen';
+  }
+};
+
+const handleLogout = async () => {
+  if (realtimeSubscription) {
+    await supabase.removeChannel(realtimeSubscription);
+    realtimeSubscription = null;
+  }
+
+  await supabase.auth.signOut();
+  entries = [];
+  render();
+  checkAuth();
+};
+
+const switchAuthMode = () => {
+  isSignUp = !isSignUp;
+  authSubmitBtn.textContent = isSignUp ? 'Registreer' : 'Inloggen';
+  authSwitchBtn.textContent = isSignUp 
+    ? 'Al een account? Log in' 
+    : 'Nog geen account? Registreer';
+  hideAuthError();
+};
+
+// Supabase data functies
 // Render functies
 const renderCalendar = (entries) => {
   const grouped = groupByDay(entries);

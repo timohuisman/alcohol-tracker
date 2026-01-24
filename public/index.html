@@ -7,6 +7,36 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <!-- Authenticatie modal -->
+    <div id="authModal" class="auth-modal" style="display: none;">
+      <div class="auth-modal-content">
+        <h2>Inloggen</h2>
+        <p class="auth-subtitle">Log in om je gegevens op meerdere apparaten te kunnen gebruiken</p>
+
+        <div id="authError" class="auth-error" style="display: none;"></div>
+
+        <form id="authForm" class="auth-form">
+          <label>
+            Email
+            <input type="email" id="authEmail" required />
+          </label>
+          <label>
+            Wachtwoord
+            <input type="password" id="authPassword" required />
+          </label>
+          <div class="auth-buttons">
+            <button type="submit" id="authSubmitBtn">Inloggen</button>
+            <button type="button" id="authSwitchBtn" class="ghost">Nog geen account? Registreer</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- User info in header -->
+    <div id="userInfo" class="user-info" style="display: none;">
+      <span id="userEmail"></span>
+      <button id="logoutBtn" class="ghost small">Uitloggen</button>
+    </div>
     <header class="app-header">
       <div>
         <p class="eyebrow">Alcohol Tracker</p>

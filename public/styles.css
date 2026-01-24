@@ -31,6 +31,13 @@ p {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 32px;
+  position: relative;
+}
+
+.user-info {
+  position: absolute;
+  top: 0;
+  right: 0;
 }
 
 .eyebrow {
@@ -341,6 +348,75 @@ button.small {
   color: #6c6f87;
 }
 
+/* Authenticatie styles */
+.auth-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 24px;
+}
+
+.auth-modal-content {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 32px;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+.auth-subtitle {
+  color: #6c6f87;
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+
+.auth-form {
+  display: grid;
+  gap: 16px;
+}
+
+.auth-buttons {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.auth-error {
+  background: #fee2e2;
+  color: #dc2626;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background: #f7f8ff;
+  border-radius: 12px;
+  font-size: 14px;
+}
+
+.user-info span {
+  color: #3b3f52;
+}
+
+.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
 @media (max-width: 720px) {
   body {
     padding: 24px 16px 40px;
@@ -349,5 +425,13 @@ button.small {
   .app-header {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .auth-modal {
+    padding: 16px;
+  }
+
+  .auth-modal-content {
+    padding: 24px;
   }
 }
