@@ -55,6 +55,8 @@ const monthTopDay = document.getElementById("monthTopDay");
 const monthTopWeekday = document.getElementById("monthTopWeekday");
 const monthDelta = document.getElementById("monthDelta");
 const monthDeltaSub = document.getElementById("monthDeltaSub");
+const trendChart = document.getElementById("trendChart");
+const trendLegend = document.getElementById("trendLegend");
 
 // Authenticatie elementen
 const authModal = document.getElementById("authModal");
@@ -191,6 +193,54 @@ const getElapsedDaysInMonth = (year, month) => {
     return now.getDate();
   }
   return getDaysInMonth(year, month);
+};
+
+const getDayOfYear = (dateString) => {
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return null;
+  const start = new Date(date.getFullYear(), 0, 1);
+  const diff = date.setHours(0, 0, 0, 0) - start.getTime();
+  return Math.floor(diff / 86400000) + 1;
+};
+
+const buildYearSeries = (entries) => {
+  const series = new Map();
+  entries.forEach((entry) => {
+    if (!Number.isFinite(entry.units)) return;
+    const dayOfYear = getDayOfYear(entry.date);
+    if (!dayOfYear) return;
+    const year = Number(entry.date.slice(0, 4));
+    if (!series.has(year)) {
+      series.set(year, {});
+    }
+    const yearMap = series.get(year);
+    yearMap[dayOfYear] = (yearMap[dayOfYear] || 0) + entry.units;
+  });
+  return series;
+};
+
+const computeAverageDailyTotals = (seriesMap, years, daysInYear) => {
+  const sums = Array.from({ length: daysInYear }, () => 0);
+  const counts = Array.from({ length: daysInYear }, () => 0);
+  years.forEach((year) => {
+    const dailyTotals = seriesMap.get(year) || {};
+    for (let day = 1; day <= daysInYear; day += 1) {
+      const value = dailyTotals[day] || 0;
+      sums[day - 1] += value;
+      counts[day - 1] += 1;
+    }
+  });
+  return sums.map((sum, index) => (counts[index] ? sum / counts[index] : 0));
+};
+
+const computeCumulativeSeries = (dailyTotals, days) => {
+  const cumulative = [];
+  let sum = 0;
+  for (let day = 1; day <= days; day += 1) {
+    sum += dailyTotals[day] || 0;
+    cumulative.push(sum);
+  }
+  return cumulative;
 };
 
 const applyDrinkCountStyling = () => {
@@ -443,6 +493,179 @@ const renderMonthOverview = (entries) => {
   } else {
     monthDelta.textContent = "-";
     monthDeltaSub.textContent = "";
+  }
+};
+
+const renderTrendChart = (entries) => {
+  if (!trendChart || !trendLegend) return;
+
+  const availableYears = getAvailableYears(entries);
+  const primaryYear = selectedYear;
+  const compareYears = [primaryYear - 1, primaryYear - 2].filter((year) =>
+    availableYears.includes(year),
+  );
+  const years = [primaryYear, ...compareYears];
+
+  const seriesMap = buildYearSeries(entries);
+  const now = new Date();
+  const svgWidth = 640;
+  const svgHeight = 240;
+  const paddingTop = 20;
+  const paddingRight = 20;
+  const paddingBottom = 20;
+  const paddingLeft = 44;
+  const plotWidth = svgWidth - paddingLeft - paddingRight;
+  const plotHeight = svgHeight - paddingTop - paddingBottom;
+
+  const lines = years.map((year) => {
+    const days = getDaysInYear(year);
+    const dailyTotals = seriesMap.get(year) || {};
+    const cumulative = computeCumulativeSeries(dailyTotals, days);
+    return { year, days, cumulative, dailyTotals };
+  });
+
+  let predictedMax = 0;
+  if (primaryYear === now.getFullYear() && compareYears.length) {
+    const days = getDaysInYear(primaryYear);
+    const elapsedDays = getElapsedDaysInYear(primaryYear);
+    const avgDaily = computeAverageDailyTotals(seriesMap, compareYears, days);
+    let sum = (lines[0]?.cumulative?.[elapsedDays - 1]) || 0;
+    for (let day = elapsedDays + 1; day <= days; day += 1) {
+      sum += avgDaily[day - 1] || 0;
+      if (sum > predictedMax) predictedMax = sum;
+    }
+  }
+
+  const maxValue = Math.max(
+    1,
+    ...lines.flatMap((line) => line.cumulative),
+    predictedMax,
+  );
+
+  const toX = (index, days) => paddingLeft + (index / Math.max(days - 1, 1)) * plotWidth;
+  const toY = (value) => paddingTop + (1 - value / maxValue) * plotHeight;
+
+  trendChart.innerHTML = "";
+  trendLegend.innerHTML = "";
+
+  const gridCount = 4;
+  for (let i = 0; i <= gridCount; i += 1) {
+    const y = paddingTop + (i / gridCount) * plotHeight;
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.setAttribute("x1", String(paddingLeft));
+    line.setAttribute("x2", String(svgWidth - paddingRight));
+    line.setAttribute("y1", String(y));
+    line.setAttribute("y2", String(y));
+    line.setAttribute("stroke", "#e2e4f6");
+    line.setAttribute("stroke-width", "1");
+    trendChart.appendChild(line);
+
+    const value = Math.round((1 - i / gridCount) * maxValue);
+    const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    label.setAttribute("x", String(paddingLeft - 8));
+    label.setAttribute("y", String(y + 4));
+    label.setAttribute("text-anchor", "end");
+    label.setAttribute("fill", "#6c6f87");
+    label.setAttribute("font-size", "10");
+    label.textContent = formatNumber(value);
+    trendChart.appendChild(label);
+  }
+
+  const colors = ["#3638f4", "#6c6f87", "#b5b9cc"];
+
+  lines.forEach((line, index) => {
+    if (!line.cumulative.length) return;
+    const isCurrentYear = line.year === new Date().getFullYear();
+    const elapsedDays = isCurrentYear ? getElapsedDaysInYear(line.year) : line.days;
+    const hasPrediction = isCurrentYear && compareYears.length > 0;
+
+    if (isCurrentYear) {
+      const actualPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      const actualD = line.cumulative
+        .slice(0, elapsedDays)
+        .map((value, i) => {
+          const x = toX(i, line.days);
+          const y = toY(value);
+          return `${i === 0 ? "M" : "L"}${x} ${y}`;
+        })
+        .join(" ");
+      actualPath.setAttribute("d", actualD);
+      actualPath.setAttribute("fill", "none");
+      actualPath.setAttribute("stroke", colors[index] || "#b5b9cc");
+      actualPath.setAttribute("stroke-width", "2.5");
+      actualPath.setAttribute("stroke-linecap", "round");
+      actualPath.setAttribute("stroke-linejoin", "round");
+      trendChart.appendChild(actualPath);
+
+      if (hasPrediction) {
+        const avgDaily = computeAverageDailyTotals(seriesMap, compareYears, line.days);
+        const predicted = [];
+        let sum = line.cumulative[elapsedDays - 1] || 0;
+        for (let day = elapsedDays + 1; day <= line.days; day += 1) {
+          sum += avgDaily[day - 1] || 0;
+          predicted.push(sum);
+        }
+
+        if (predicted.length) {
+          const predictedPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          const predictedD = predicted
+            .map((value, i) => {
+              const dayIndex = elapsedDays + i;
+              const x = toX(dayIndex, line.days);
+              const y = toY(value);
+              return `${i === 0 ? "M" : "L"}${x} ${y}`;
+            })
+            .join(" ");
+          predictedPath.setAttribute("d", predictedD);
+          predictedPath.setAttribute("fill", "none");
+          predictedPath.setAttribute("stroke", colors[index] || "#b5b9cc");
+          predictedPath.setAttribute("stroke-width", "2");
+          predictedPath.setAttribute("stroke-linecap", "round");
+          predictedPath.setAttribute("stroke-linejoin", "round");
+          predictedPath.setAttribute("stroke-dasharray", "4 6");
+          predictedPath.setAttribute("opacity", "0.45");
+          trendChart.appendChild(predictedPath);
+        }
+      }
+      return;
+    }
+
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    const d = line.cumulative
+      .map((value, i) => {
+        const x = toX(i, line.days);
+        const y = toY(value);
+        return `${i === 0 ? "M" : "L"}${x} ${y}`;
+      })
+      .join(" ");
+    path.setAttribute("d", d);
+    path.setAttribute("fill", "none");
+    path.setAttribute("stroke", colors[index] || "#b5b9cc");
+    path.setAttribute("stroke-width", index === 0 ? "2.5" : "1.5");
+    path.setAttribute("stroke-linecap", "round");
+    path.setAttribute("stroke-linejoin", "round");
+    trendChart.appendChild(path);
+
+    const legendItem = document.createElement("div");
+    legendItem.className = "trend-legend-item";
+    legendItem.style.color = colors[index] || "#b5b9cc";
+    const swatch = document.createElement("span");
+    swatch.className = "trend-legend-swatch";
+    const label = document.createElement("span");
+    label.textContent = String(line.year);
+    legendItem.appendChild(swatch);
+    legendItem.appendChild(label);
+    trendLegend.appendChild(legendItem);
+  });
+
+  if (!lines.some((line) => line.cumulative.some((value) => value > 0))) {
+    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    text.setAttribute("x", String(svgWidth / 2));
+    text.setAttribute("y", String(svgHeight / 2));
+    text.setAttribute("text-anchor", "middle");
+    text.setAttribute("fill", "#6c6f87");
+    text.textContent = "Nog geen data om te tonen.";
+    trendChart.appendChild(text);
   }
 };
 
@@ -1072,6 +1295,7 @@ const render = () => {
   updateMonthYearOptions(availableYears);
   updateMonthControls(availableYears);
   renderMonthOverview(entries);
+  renderTrendChart(entries);
   renderCalendar(entries);
 };
 
@@ -1165,6 +1389,7 @@ if (yearSelect) {
     renderYearOverview(entries);
     const availableYears = getAvailableYears(entries);
     updateYearControls(availableYears);
+    renderTrendChart(entries);
   });
 }
 if (yearPrev) {
@@ -1175,6 +1400,7 @@ if (yearPrev) {
       selectedYear -= 1;
       updateYearControls(availableYears);
       renderYearOverview(entries);
+      renderTrendChart(entries);
     }
   });
 }
@@ -1186,6 +1412,7 @@ if (yearNext) {
       selectedYear += 1;
       updateYearControls(availableYears);
       renderYearOverview(entries);
+      renderTrendChart(entries);
     }
   });
 }
