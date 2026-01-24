@@ -132,6 +132,40 @@
         </p>
       </section>
 
+      <section class="card year-section">
+        <div class="section-header">
+          <h2>Jaaroverzicht</h2>
+          <div class="year-controls">
+            <button id="yearPrev" class="ghost small" type="button" aria-label="Vorig jaar">←</button>
+            <select id="yearSelect" aria-label="Selecteer jaar"></select>
+            <button id="yearNext" class="ghost small" type="button" aria-label="Volgend jaar">→</button>
+          </div>
+        </div>
+        <div class="insight-grid year-grid">
+          <div>
+            <p class="insight-label">Totaal dit jaar</p>
+            <p class="insight-value" id="yearTotal">0</p>
+          </div>
+          <div>
+            <p class="insight-label">Gemiddeld per geregistreerde dag</p>
+            <p class="insight-value" id="yearAverage">0</p>
+          </div>
+          <div>
+            <p class="insight-label">Dagen met 1+ registraties</p>
+            <p class="insight-value" id="yearActiveDays">0</p>
+            <p class="insight-subtle" id="yearActiveDaysTotal"></p>
+          </div>
+          <div>
+            <p class="insight-label">Meest actieve maand</p>
+            <p class="insight-value" id="yearTopMonth">-</p>
+          </div>
+          <div>
+            <p class="insight-label">Dag met meeste drankjes</p>
+            <p class="insight-value" id="yearTopDay">-</p>
+          </div>
+        </div>
+      </section>
+
       <section class="card calendar-section">
         <h2>Kalenderweergave</h2>
         <div class="calendar-controls">

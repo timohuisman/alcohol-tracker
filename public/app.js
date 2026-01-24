@@ -34,6 +34,15 @@ const calendarContainer = document.getElementById("calendarContainer");
 const calendarTitle = document.getElementById("calendarTitle");
 const calendarPrev = document.getElementById("calendarPrev");
 const calendarNext = document.getElementById("calendarNext");
+const yearSelect = document.getElementById("yearSelect");
+const yearPrev = document.getElementById("yearPrev");
+const yearNext = document.getElementById("yearNext");
+const yearTotal = document.getElementById("yearTotal");
+const yearAverage = document.getElementById("yearAverage");
+const yearActiveDays = document.getElementById("yearActiveDays");
+const yearActiveDaysTotal = document.getElementById("yearActiveDaysTotal");
+const yearTopMonth = document.getElementById("yearTopMonth");
+const yearTopDay = document.getElementById("yearTopDay");
 
 // Authenticatie elementen
 const authModal = document.getElementById("authModal");
@@ -66,6 +75,7 @@ let calendarYear = new Date().getFullYear();
 let calendarMonth = new Date().getMonth();
 const shareToken = new URLSearchParams(window.location.search).get("share");
 const isShareMode = Boolean(shareToken);
+let selectedYear = new Date().getFullYear();
 
 // Utility functies
 const formatNumber = (value) => value.toLocaleString("nl-NL", {
@@ -140,9 +150,142 @@ const formatDateString = (year, month, day) => {
   return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 };
 
+const formatMonthLabel = (year, month) =>
+  new Date(year, month, 1).toLocaleDateString("nl-NL", { month: "long" });
+
+const getDaysInYear = (year) => {
+  const isLeap = new Date(year, 1, 29).getDate() === 29;
+  return isLeap ? 366 : 365;
+};
+
+const getElapsedDaysInYear = (year) => {
+  const now = new Date();
+  if (year !== now.getFullYear()) {
+    return getDaysInYear(year);
+  }
+  const startOfYear = new Date(year, 0, 1);
+  const diffMs = now.setHours(0, 0, 0, 0) - startOfYear.getTime();
+  return Math.floor(diffMs / 86400000) + 1;
+};
+
+const applyDrinkCountStyling = () => {
+  [
+    todayTotal,
+    averagePerDay,
+    totalRecorded,
+    yearTotal,
+    yearAverage,
+  ].forEach((element) => {
+    if (element) element.classList.add("drink-count");
+  });
+};
+
 const updateCalendarTitle = (year, month) => {
   if (calendarTitle) {
     calendarTitle.textContent = formatMonthYear(year, month);
+  }
+};
+
+const getAvailableYears = (entries) => {
+  const years = new Set();
+  entries.forEach((entry) => {
+    if (entry?.date) {
+      years.add(Number(entry.date.slice(0, 4)));
+    }
+  });
+  if (!years.size) {
+    years.add(new Date().getFullYear());
+  }
+  return Array.from(years).sort((a, b) => b - a);
+};
+
+const updateYearOptions = (years) => {
+  if (!yearSelect) return;
+  yearSelect.innerHTML = "";
+  years.forEach((year) => {
+    const option = document.createElement("option");
+    option.value = String(year);
+    option.textContent = String(year);
+    yearSelect.appendChild(option);
+  });
+};
+
+const updateYearControls = (years) => {
+  if (!yearSelect) return;
+  if (!years.includes(selectedYear)) {
+    selectedYear = years[0];
+  }
+  yearSelect.value = String(selectedYear);
+  if (yearPrev) {
+    yearPrev.disabled = selectedYear <= years[years.length - 1];
+  }
+  if (yearNext) {
+    yearNext.disabled = selectedYear >= years[0];
+  }
+};
+
+const renderYearOverview = (entries) => {
+  if (
+    !yearSelect
+    || !yearTotal
+    || !yearAverage
+    || !yearActiveDays
+    || !yearActiveDaysTotal
+    || !yearTopMonth
+    || !yearTopDay
+  ) return;
+
+  const grouped = groupByDay(entries);
+  const daysInYear = Object.keys(grouped).filter((dateStr) => dateStr.startsWith(`${selectedYear}-`));
+  const dayTotals = daysInYear.map((date) => ({
+    date,
+    total: calculateTotal((grouped[date] || []).filter((entry) => Number.isFinite(entry.units))),
+  }));
+  const yearEntries = dayTotals.flatMap((day) =>
+    (grouped[day.date] || []).filter((entry) => Number.isFinite(entry.units)),
+  );
+  const total = calculateTotal(yearEntries);
+  const activeDays = dayTotals.filter((day) => day.total > 0).length;
+  const average = activeDays ? total / activeDays : 0;
+  const daysInSelectedYear = getElapsedDaysInYear(selectedYear);
+  const activePercentage = daysInSelectedYear
+    ? Math.round((activeDays / daysInSelectedYear) * 100)
+    : 0;
+
+  const monthTotals = Array.from({ length: 12 }, () => 0);
+  yearEntries.forEach((entry) => {
+    const month = Number(entry.date.slice(5, 7)) - 1;
+    if (month >= 0 && month < 12) {
+      monthTotals[month] += entry.units;
+    }
+  });
+
+  let topMonthIndex = -1;
+  let topMonthTotal = 0;
+  monthTotals.forEach((value, index) => {
+    if (value > topMonthTotal) {
+      topMonthTotal = value;
+      topMonthIndex = index;
+    }
+  });
+
+  yearTotal.textContent = formatNumber(total || 0);
+  yearAverage.textContent = formatNumber(average || 0);
+  yearActiveDays.innerHTML = `${formatNumber(activeDays || 0)} / <span class="insight-subtle">${formatNumber(daysInSelectedYear)}</span>`;
+  yearActiveDaysTotal.textContent = `${activePercentage}% van het jaar`;
+  if (topMonthIndex >= 0 && topMonthTotal > 0) {
+    yearTopMonth.innerHTML = `${formatMonthLabel(selectedYear, topMonthIndex)} (<span class="drink-count">${formatNumber(topMonthTotal)}</span>)`;
+  } else {
+    yearTopMonth.textContent = "-";
+  }
+
+  if (activeDays) {
+    const topDay = dayTotals
+      .slice()
+      .sort((a, b) => b.total - a.total)[0];
+    yearTopDay.innerHTML = `${formatDate(topDay.date)} (<span class="drink-count">${formatNumber(topDay.total)}</span>)`;
+  } else {
+    yearTopDay.textContent = "-";
   }
 };
 
@@ -719,7 +862,7 @@ const render = () => {
     const removeDayButton = node.querySelector(".remove-day");
 
     dayTitle.textContent = formatDate(day);
-    dayTotal.textContent = `${formatNumber(totalForDay)} standaardglazen`;
+    dayTotal.innerHTML = `<span class="drink-count">${formatNumber(totalForDay)}</span> standaardglazen`;
 
     if (isShareMode) {
       removeDayButton.style.display = "none";
@@ -747,9 +890,8 @@ const render = () => {
         timeNode.textContent = "";
         timeNode.style.display = "none";
       }
-      entryNode.querySelector(
-        ".entry-units",
-      ).textContent = `${formatNumber(entry.units)} glazen`;
+      const entryUnitsNode = entryNode.querySelector(".entry-units");
+      entryUnitsNode.innerHTML = `<span class="drink-count">${formatNumber(entry.units)}</span> glazen`;
       const removeEntryButton = entryNode.querySelector(".remove-entry");
       if (isShareMode) {
         removeEntryButton.style.display = "none";
@@ -765,6 +907,10 @@ const render = () => {
   });
 
   updateInsights(entries);
+  const availableYears = getAvailableYears(entries);
+  updateYearOptions(availableYears);
+  updateYearControls(availableYears);
+  renderYearOverview(entries);
   renderCalendar(entries);
 };
 
@@ -790,9 +936,9 @@ const updateInsights = (entries) => {
     .map((day) => ({ day, total: calculateTotal(grouped[day]) }))
     .sort((a, b) => b.total - a.total)[0];
 
-  topDay.textContent = `${formatDate(topEntry.day)} (${formatNumber(
+  topDay.innerHTML = `${formatDate(topEntry.day)} (<span class="drink-count">${formatNumber(
     topEntry.total,
-  )})`;
+  )}</span>)`;
 };
 
 // Event listeners
@@ -852,6 +998,36 @@ if (shareLinkCopy) {
 if (shareLinkRevoke) {
   shareLinkRevoke.addEventListener("click", revokeShareLink);
 }
+if (yearSelect) {
+  yearSelect.addEventListener("change", () => {
+    selectedYear = Number(yearSelect.value);
+    renderYearOverview(entries);
+    const availableYears = getAvailableYears(entries);
+    updateYearControls(availableYears);
+  });
+}
+if (yearPrev) {
+  yearPrev.addEventListener("click", () => {
+    const availableYears = getAvailableYears(entries);
+    const minYear = availableYears[availableYears.length - 1];
+    if (selectedYear > minYear) {
+      selectedYear -= 1;
+      updateYearControls(availableYears);
+      renderYearOverview(entries);
+    }
+  });
+}
+if (yearNext) {
+  yearNext.addEventListener("click", () => {
+    const availableYears = getAvailableYears(entries);
+    const maxYear = availableYears[0];
+    if (selectedYear < maxYear) {
+      selectedYear += 1;
+      updateYearControls(availableYears);
+      renderYearOverview(entries);
+    }
+  });
+}
 if (calendarPrev) {
   calendarPrev.addEventListener("click", () => changeCalendarMonth(-1));
 }
@@ -894,6 +1070,7 @@ if (supabase && !isShareMode) {
 // Initialisatie
 entryDate.value = getLocalDateString();
 entryName.value = defaultDrinkName;
+applyDrinkCountStyling();
 
 if (isShareMode) {
   setReadOnlyUI();

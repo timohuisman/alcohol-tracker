@@ -327,6 +327,38 @@ button.small {
   grid-column: 1 / -1;
 }
 
+.year-section {
+  grid-column: 1 / -1;
+}
+
+.year-controls {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.year-controls select {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid #e2e4f6;
+  background: #ffffff;
+  font-size: 14px;
+  color: #3b3f52;
+}
+
+.year-controls .ghost.small {
+  min-width: 36px;
+  height: 36px;
+  padding: 0;
+  font-size: 16px;
+}
+
+.year-grid {
+  margin-top: 12px;
+}
+
 .calendar-container {
   --calendar-gap: clamp(1px, 0.9vw, 5px);
   --calendar-day-padding: clamp(1px, 0.9vw, 6px);
@@ -535,6 +567,25 @@ button.small {
 .insight-value {
   font-size: 22px;
   font-weight: 600;
+}
+
+.drink-count {
+  color: #3638f4;
+}
+
+.day-list .drink-count {
+  font-weight: 600;
+}
+
+.insight-subtle {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #8a8fa3;
+}
+
+.insight-value .insight-subtle {
+  font-size: 13px;
+  color: #8a8fa3;
 }
 
 .helper {
