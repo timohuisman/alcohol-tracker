@@ -43,6 +43,8 @@ const authError = document.getElementById("authError");
 const userInfo = document.getElementById("userInfo");
 const userEmail = document.getElementById("userEmail");
 const logoutBtn = document.getElementById("logoutBtn");
+const navToggle = document.getElementById("navToggle");
+const navMenu = document.getElementById("navMenu");
 
 // State
 let isSignUp = false;
@@ -211,6 +213,12 @@ const handleLogout = async () => {
   entries = [];
   render();
   checkAuth();
+};
+
+const toggleNavMenu = () => {
+  if (!navMenu || !navToggle) return;
+  const isOpen = navMenu.classList.toggle("open");
+  navToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
 };
 
 const switchAuthMode = () => {
@@ -585,6 +593,9 @@ clearData.addEventListener("click", () => {
 authForm.addEventListener("submit", handleAuth);
 authSwitchBtn.addEventListener("click", switchAuthMode);
 logoutBtn.addEventListener("click", handleLogout);
+if (navToggle) {
+  navToggle.addEventListener("click", toggleNavMenu);
+}
 
 // Auth state listener
 if (supabase) {

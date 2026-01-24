@@ -11,6 +11,25 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
   <body>
+    <nav class="top-nav">
+      <div class="nav-inner">
+        <div class="nav-brand">Alcohol Tracker</div>
+        <button class="nav-toggle" type="button" id="navToggle" aria-expanded="false" aria-controls="navMenu">
+          <span class="nav-toggle-bar"></span>
+          <span class="nav-toggle-bar"></span>
+          <span class="nav-toggle-bar"></span>
+          <span class="sr-only">Menu</span>
+        </button>
+      </div>
+      <div class="nav-menu" id="navMenu">
+        <div id="userInfo" class="user-info" style="display: none;">
+          <p class="nav-menu-title">Gebruikersinfo</p>
+          <span id="userEmail"></span>
+          <button id="logoutBtn" class="ghost small">Uitloggen</button>
+        </div>
+      </div>
+    </nav>
+
     <!-- Authenticatie modal -->
     <div id="authModal" class="auth-modal" style="display: none;">
       <div class="auth-modal-content">
@@ -36,14 +55,8 @@
       </div>
     </div>
 
-    <!-- User info in header -->
-    <div id="userInfo" class="user-info" style="display: none;">
-      <span id="userEmail"></span>
-      <button id="logoutBtn" class="ghost small">Uitloggen</button>
-    </div>
     <header class="app-header">
       <div>
-        <p class="eyebrow">Alcohol Tracker</p>
         <h1>Houd je alcoholconsumptie per dag bij</h1>
         <p class="subtitle">
           Registreer je drankjes, bekijk totalen en ontdek je patronen.
