@@ -1,0 +1,238 @@
+:root {
+  color-scheme: light;
+  font-family: "Inter", system-ui, sans-serif;
+  background: #f5f6fb;
+  color: #1c1d2a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 32px 24px 64px;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0 0 8px;
+}
+
+p {
+  margin: 0;
+}
+
+.app-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32px;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  color: #6c6f87;
+}
+
+.subtitle {
+  color: #4e5264;
+  margin-top: 12px;
+  max-width: 520px;
+}
+
+.summary-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 18px 24px;
+  box-shadow: 0 14px 28px rgba(24, 32, 64, 0.08);
+  min-width: 200px;
+  display: grid;
+  gap: 4px;
+}
+
+.summary-title {
+  font-size: 14px;
+  color: #6c6f87;
+}
+
+.summary-value {
+  font-size: 32px;
+  font-weight: 600;
+}
+
+.summary-unit {
+  font-size: 13px;
+  color: #6c6f87;
+}
+
+.layout {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.card {
+  background: #ffffff;
+  padding: 24px;
+  border-radius: 20px;
+  box-shadow: 0 16px 32px rgba(24, 32, 64, 0.06);
+}
+
+.entry-form {
+  display: grid;
+  gap: 16px;
+}
+
+label {
+  display: grid;
+  gap: 6px;
+  font-size: 14px;
+  color: #3b3f52;
+}
+
+input,
+textarea {
+  border: 1px solid #d7d9e6;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+button {
+  border: none;
+  background: #3638f4;
+  color: #ffffff;
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button.ghost {
+  background: transparent;
+  color: #3638f4;
+  border: 1px solid #c9cdfc;
+}
+
+button.small {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.day-list {
+  display: grid;
+  gap: 16px;
+}
+
+.day-card {
+  background: #f7f8ff;
+  border-radius: 16px;
+  padding: 16px;
+  border: 1px solid #e2e4f6;
+}
+
+.day-card header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.day-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.day-total {
+  font-size: 13px;
+  color: #6c6f87;
+}
+
+.day-entries {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0 0;
+  display: grid;
+  gap: 12px;
+}
+
+.entry-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid #e5e7f5;
+}
+
+.entry-name {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.entry-note {
+  font-size: 12px;
+  color: #6c6f87;
+}
+
+.entry-meta {
+  display: grid;
+  justify-items: end;
+  gap: 6px;
+}
+
+.insights {
+  grid-column: 1 / -1;
+}
+
+.insight-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.insight-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6c6f87;
+}
+
+.insight-value {
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.helper {
+  font-size: 13px;
+  color: #6c6f87;
+}
+
+@media (max-width: 720px) {
+  body {
+    padding: 24px 16px 40px;
+  }
+
+  .app-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
