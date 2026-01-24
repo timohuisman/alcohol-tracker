@@ -1305,6 +1305,7 @@ const renderCalendar = (entries) => {
   const grouped = groupByDay(entries);
   const currentYear = calendarYear;
   const currentMonth = calendarMonth;
+  const today = getLocalDateString();
 
   calendarContainer.innerHTML = "";
 
@@ -1390,6 +1391,9 @@ const renderCalendar = (entries) => {
       dayElement.className = `calendar-day ${colorClass} ${dayInfo.inCurrentMonth ? "" : "out-month"}`.trim();
       dayElement.setAttribute("data-date", dateStr);
       dayElement.setAttribute("title", `${dateStr}: ${formatNumber(drinkCount)} standaardglazen`);
+      if (dateStr === today) {
+        dayElement.classList.add("today");
+      }
 
       const dayNumber = document.createElement("div");
       dayNumber.className = "calendar-day-number";
