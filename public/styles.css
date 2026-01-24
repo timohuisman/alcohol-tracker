@@ -292,6 +292,15 @@ button.ghost {
   border: 1px solid #c9cdfc;
 }
 
+.ghost.danger {
+  color: #dc2626;
+  border-color: #fca5a5;
+}
+
+.ghost.danger:hover {
+  background: rgba(220, 38, 38, 0.08);
+}
+
 button.small {
   padding: 6px 10px;
   font-size: 12px;
