@@ -61,6 +61,8 @@ const monthDelta = document.getElementById("monthDelta");
 const monthDeltaSub = document.getElementById("monthDeltaSub");
 const trendChart = document.getElementById("trendChart");
 const trendLegend = document.getElementById("trendLegend");
+const distributionChart = document.getElementById("distributionChart");
+const distributionYearSelect = document.getElementById("distributionYearSelect");
 
 // Authenticatie elementen
 const authModal = document.getElementById("authModal");
@@ -96,6 +98,7 @@ const isShareMode = Boolean(shareToken);
 let selectedYear = new Date().getFullYear();
 let selectedMonth = new Date().getMonth();
 let selectedMonthYear = new Date().getFullYear();
+let selectedDistributionYear = "all";
 
 // Utility functies
 const formatNumber = (value) => value.toLocaleString("nl-NL", {
@@ -325,6 +328,62 @@ const renderStreaks = (entries) => {
   }
 };
 
+const renderDistribution = (entries) => {
+  if (!distributionChart) return;
+  distributionChart.innerHTML = "";
+
+  const grouped = groupByDay(entries);
+  const buckets = [
+    { label: "1", min: 1, max: 1, count: 0 },
+    { label: "2", min: 2, max: 2, count: 0 },
+    { label: "3", min: 3, max: 3, count: 0 },
+    { label: "4–5", min: 4, max: 5, count: 0 },
+    { label: "6–7", min: 6, max: 7, count: 0 },
+    { label: "8–9", min: 8, max: 9, count: 0 },
+    { label: "10+", min: 10, max: Infinity, count: 0 },
+  ];
+
+  const filteredDates = Object.keys(grouped).filter((date) => {
+    if (selectedDistributionYear === "all") return true;
+    return date.startsWith(`${selectedDistributionYear}-`);
+  });
+
+  filteredDates.forEach((date) => {
+    const total = calculateTotal(
+      (grouped[date] || []).filter((entry) => Number.isFinite(entry.units)),
+    );
+    if (total <= 0) return;
+    const bucket = buckets.find((item) => total >= item.min && total <= item.max);
+    if (bucket) bucket.count += 1;
+  });
+
+  const maxCount = Math.max(1, ...buckets.map((bucket) => bucket.count));
+
+  buckets.forEach((bucket) => {
+    const row = document.createElement("div");
+    row.className = "distribution-row";
+
+    const label = document.createElement("div");
+    label.className = "distribution-label";
+    label.textContent = `${bucket.label} glas`;
+    row.appendChild(label);
+
+    const bar = document.createElement("div");
+    bar.className = "distribution-bar";
+    const fill = document.createElement("span");
+    fill.style.width = `${Math.round((bucket.count / maxCount) * 100)}%`;
+    bar.appendChild(fill);
+    row.appendChild(bar);
+
+    const value = document.createElement("div");
+    value.className = "distribution-value";
+    value.textContent = `${formatNumber(bucket.count)} dagen`;
+    row.appendChild(value);
+
+    distributionChart.appendChild(row);
+  });
+};
+
 const buildYearSeries = (entries) => {
   const series = new Map();
   entries.forEach((entry) => {
@@ -458,6 +517,28 @@ const updateMonthControls = (years) => {
   const isAtMax = selectedMonthYear === maxYear && selectedMonth === 11;
   if (monthPrev) monthPrev.disabled = isAtMin;
   if (monthNext) monthNext.disabled = isAtMax;
+};
+
+const updateDistributionYearOptions = (years) => {
+  if (!distributionYearSelect) return;
+  const current = distributionYearSelect.value || "all";
+  distributionYearSelect.innerHTML = "";
+  const allOption = document.createElement("option");
+  allOption.value = "all";
+  allOption.textContent = "Alle jaren";
+  distributionYearSelect.appendChild(allOption);
+  years.forEach((year) => {
+    const option = document.createElement("option");
+    option.value = String(year);
+    option.textContent = String(year);
+    distributionYearSelect.appendChild(option);
+  });
+  if (current === "all" || years.includes(Number(current))) {
+    distributionYearSelect.value = current;
+  } else {
+    distributionYearSelect.value = "all";
+  }
+  selectedDistributionYear = distributionYearSelect.value;
 };
 
 const renderYearOverview = (entries) => {
@@ -1411,6 +1492,8 @@ const render = () => {
   updateInsights(entries);
   renderStreaks(entries);
   const availableYears = getAvailableYears(entries);
+  updateDistributionYearOptions(availableYears);
+  renderDistribution(entries);
   updateYearOptions(availableYears);
   updateYearControls(availableYears);
   renderYearOverview(entries);
@@ -1585,6 +1668,12 @@ if (monthNext) {
     }
     updateMonthControls(availableYears);
     renderMonthOverview(entries);
+  });
+}
+if (distributionYearSelect) {
+  distributionYearSelect.addEventListener("change", () => {
+    selectedDistributionYear = distributionYearSelect.value;
+    renderDistribution(entries);
   });
 }
 if (calendarPrev) {
