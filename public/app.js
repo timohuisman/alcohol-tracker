@@ -79,6 +79,23 @@ const formatDate = (dateString) => {
   });
 };
 
+const getLocalDateString = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const formatTime = (dateTimeString) => {
+  const date = new Date(dateTimeString);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleTimeString("nl-NL", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
 const calculateTotal = (entries) =>
   entries.reduce((sum, entry) => sum + entry.units, 0);
 
@@ -486,6 +503,7 @@ const renderCalendar = (entries) => {
 const render = () => {
   const grouped = groupByDay(entries);
   const days = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
+  const today = getLocalDateString();
 
   dayList.innerHTML = "";
 
@@ -516,6 +534,13 @@ const render = () => {
       entryNode.querySelector(".entry-note").textContent = entry.note
         ? entry.note
         : "Geen opmerking";
+      const timeNode = entryNode.querySelector(".entry-time");
+      if (day === today && entry.created_at) {
+        timeNode.textContent = formatTime(entry.created_at);
+      } else {
+        timeNode.textContent = "";
+        timeNode.style.display = "none";
+      }
       entryNode.querySelector(
         ".entry-units",
       ).textContent = `${formatNumber(entry.units)} glazen`;
@@ -579,7 +604,7 @@ entryForm.addEventListener("submit", async (event) => {
   entryForm.reset();
   entryName.value = defaultDrinkName;
   entryUnits.value = "1";
-  entryDate.value = new Date().toISOString().slice(0, 10);
+  entryDate.value = getLocalDateString();
 });
 
 clearData.addEventListener("click", () => {
@@ -599,7 +624,7 @@ if (navToggle) {
 }
 if (quickAddBtn) {
   quickAddBtn.addEventListener("click", async () => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = getLocalDateString();
     await addEntry({
       date: today,
       name: defaultDrinkName,
@@ -627,7 +652,7 @@ if (supabase) {
 }
 
 // Initialisatie
-entryDate.value = new Date().toISOString().slice(0, 10);
+entryDate.value = getLocalDateString();
 entryName.value = defaultDrinkName;
 
 if (supabase) {

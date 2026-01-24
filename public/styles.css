@@ -318,6 +318,11 @@ button.small {
   gap: 6px;
 }
 
+.entry-time {
+  font-size: 12px;
+  color: #6c6f87;
+}
+
 .calendar-section {
   grid-column: 1 / -1;
 }
