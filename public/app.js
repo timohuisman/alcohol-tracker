@@ -49,6 +49,13 @@ const logoutBtn = document.getElementById("logoutBtn");
 const navToggle = document.getElementById("navToggle");
 const navMenu = document.getElementById("navMenu");
 const quickAddBtn = document.getElementById("quickAddBtn");
+const shareLinkBtn = document.getElementById("shareLinkBtn");
+const shareLinkWrap = document.getElementById("shareLinkWrap");
+const shareLinkInput = document.getElementById("shareLinkInput");
+const shareLinkCopy = document.getElementById("shareLinkCopy");
+const shareLinkRevoke = document.getElementById("shareLinkRevoke");
+const shareBanner = document.getElementById("shareBanner");
+const shareLinkStatus = document.getElementById("shareLinkStatus");
 
 // State
 let isSignUp = false;
@@ -57,6 +64,8 @@ let realtimeSubscription = null;
 const defaultDrinkName = "Bier";
 let calendarYear = new Date().getFullYear();
 let calendarMonth = new Date().getMonth();
+const shareToken = new URLSearchParams(window.location.search).get("share");
+const isShareMode = Boolean(shareToken);
 
 // Utility functies
 const formatNumber = (value) => value.toLocaleString("nl-NL", {
@@ -137,6 +146,40 @@ const updateCalendarTitle = (year, month) => {
   }
 };
 
+const buildShareUrl = (token) => {
+  const base = `${window.location.origin}${window.location.pathname}`;
+  return `${base}?share=${token}`;
+};
+
+const setReadOnlyUI = () => {
+  document.body.classList.add("read-only");
+  if (shareBanner) shareBanner.style.display = "block";
+  if (authModal) authModal.style.display = "none";
+  if (entryForm) {
+    const entryCard = entryForm.closest(".card");
+    if (entryCard) entryCard.style.display = "none";
+  }
+  if (quickAddBtn) quickAddBtn.style.display = "none";
+  if (clearData) clearData.style.display = "none";
+};
+
+const showShareLink = (token) => {
+  if (!shareLinkWrap || !shareLinkInput) return;
+  if (shareLinkStatus) shareLinkStatus.style.display = "none";
+  shareLinkInput.value = buildShareUrl(token);
+  shareLinkWrap.style.display = "grid";
+};
+
+const generateShareToken = () => {
+  if (window.crypto?.randomUUID) return window.crypto.randomUUID();
+  if (window.crypto?.getRandomValues) {
+    const bytes = new Uint8Array(16);
+    window.crypto.getRandomValues(bytes);
+    return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+  }
+  return `${Date.now().toString(16)}${Math.random().toString(16).slice(2)}`;
+};
+
 // Authenticatie functies
 const showAuthError = (message) => {
   authError.textContent = message;
@@ -159,6 +202,7 @@ const hideAuthModal = () => {
 };
 
 const checkAuth = async () => {
+  if (isShareMode) return;
   if (!supabase) {
     showAuthModal();
     return;
@@ -285,8 +329,128 @@ const loadEntries = async () => {
   }
 };
 
+const loadSharedEntries = async () => {
+  if (!supabase) return;
+
+  try {
+    const { data, error } = await supabase
+      .rpc('get_shared_entries', { share_token: shareToken });
+
+    if (error) throw error;
+
+    entries = data || [];
+    render();
+  } catch (error) {
+    console.error('Fout bij laden gedeelde entries:', error);
+    if (shareBanner) {
+      shareBanner.textContent = `Kon gedeelde data niet laden: ${error.message}`;
+      shareBanner.style.display = "block";
+    }
+  }
+};
+
+const createShareLink = async () => {
+  if (!supabase) return;
+
+  try {
+    if (shareLinkStatus) {
+      shareLinkStatus.textContent = "";
+      shareLinkStatus.style.display = "none";
+    }
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      showAuthModal();
+      return;
+    }
+
+    const { data: existing, error: existingError } = await supabase
+      .from('share_links')
+      .select('token')
+      .is('revoked_at', null)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (existingError) throw existingError;
+
+    if (existing && existing.token) {
+      showShareLink(existing.token);
+      return;
+    }
+
+    const token = generateShareToken();
+    const { data, error } = await supabase
+      .from('share_links')
+      .insert([{ user_id: session.user.id, token }])
+      .select('token')
+      .single();
+
+    if (error) throw error;
+
+    showShareLink(data.token);
+  } catch (error) {
+    console.error('Fout bij maken share link:', error);
+    if (shareLinkStatus) {
+      shareLinkStatus.textContent = `Kon deel-link niet maken: ${error.message}`;
+      shareLinkStatus.style.display = "block";
+    } else {
+      showAuthError('Kon deel-link niet maken: ' + error.message);
+    }
+  }
+};
+
+const revokeShareLink = async () => {
+  if (!supabase) return;
+
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      showAuthModal();
+      return;
+    }
+
+    const { data: existing, error: existingError } = await supabase
+      .from('share_links')
+      .select('id')
+      .is('revoked_at', null)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (existingError) throw existingError;
+
+    if (!existing) {
+      if (shareLinkStatus) {
+        shareLinkStatus.textContent = "Er is geen actieve deel-link om in te trekken.";
+        shareLinkStatus.style.display = "block";
+      }
+      return;
+    }
+
+    const { error } = await supabase
+      .from('share_links')
+      .update({ revoked_at: new Date().toISOString() })
+      .eq('id', existing.id);
+
+    if (error) throw error;
+
+    if (shareLinkWrap) shareLinkWrap.style.display = "none";
+    if (shareLinkStatus) {
+      shareLinkStatus.textContent = "Deel-link ingetrokken.";
+      shareLinkStatus.style.display = "block";
+    }
+  } catch (error) {
+    console.error('Fout bij intrekken share link:', error);
+    if (shareLinkStatus) {
+      shareLinkStatus.textContent = `Kon deel-link niet intrekken: ${error.message}`;
+      shareLinkStatus.style.display = "block";
+    }
+  }
+};
+
 const addEntry = async (entry) => {
   if (!supabase) return;
+  if (isShareMode) return;
 
   try {
     const { data: { session } } = await supabase.auth.getSession();
@@ -321,6 +485,7 @@ const addEntry = async (entry) => {
 
 const deleteEntry = async (entryId) => {
   if (!supabase) return;
+  if (isShareMode) return;
 
   try {
     const { error } = await supabase
@@ -341,6 +506,7 @@ const deleteEntry = async (entryId) => {
 
 const deleteDayEntries = async (date) => {
   if (!supabase) return;
+  if (isShareMode) return;
 
   try {
     const { error } = await supabase
@@ -361,6 +527,7 @@ const deleteDayEntries = async (date) => {
 
 const clearAllEntries = async () => {
   if (!supabase) return;
+  if (isShareMode) return;
 
   try {
     const { data: { session } } = await supabase.auth.getSession();
@@ -554,14 +721,18 @@ const render = () => {
     dayTitle.textContent = formatDate(day);
     dayTotal.textContent = `${formatNumber(totalForDay)} standaardglazen`;
 
-    removeDayButton.addEventListener("click", () => {
-      const shouldDelete = window.confirm(
-        `Weet je zeker dat je alle entries van ${formatDate(day)} wilt verwijderen?`
-      );
-      if (shouldDelete) {
-        deleteDayEntries(day);
-      }
-    });
+    if (isShareMode) {
+      removeDayButton.style.display = "none";
+    } else {
+      removeDayButton.addEventListener("click", () => {
+        const shouldDelete = window.confirm(
+          `Weet je zeker dat je alle entries van ${formatDate(day)} wilt verwijderen?`
+        );
+        if (shouldDelete) {
+          deleteDayEntries(day);
+        }
+      });
+    }
 
     dayEntries.forEach((entry) => {
       const entryNode = entryTemplate.content.cloneNode(true);
@@ -579,9 +750,14 @@ const render = () => {
       entryNode.querySelector(
         ".entry-units",
       ).textContent = `${formatNumber(entry.units)} glazen`;
-      entryNode.querySelector(".remove-entry").addEventListener("click", () => {
-        deleteEntry(entry.id);
-      });
+      const removeEntryButton = entryNode.querySelector(".remove-entry");
+      if (isShareMode) {
+        removeEntryButton.style.display = "none";
+      } else {
+        removeEntryButton.addEventListener("click", () => {
+          deleteEntry(entry.id);
+        });
+      }
       entriesList.appendChild(entryNode);
     });
 
@@ -622,6 +798,7 @@ const updateInsights = (entries) => {
 // Event listeners
 entryForm.addEventListener("submit", async (event) => {
   event.preventDefault();
+  if (isShareMode) return;
   
   if (!supabase) {
     showAuthModal();
@@ -643,6 +820,7 @@ entryForm.addEventListener("submit", async (event) => {
 });
 
 clearData.addEventListener("click", () => {
+  if (isShareMode) return;
   const shouldClear = window.confirm(
     "Weet je zeker dat je alle gegevens wilt verwijderen?",
   );
@@ -654,6 +832,26 @@ clearData.addEventListener("click", () => {
 authForm.addEventListener("submit", handleAuth);
 authSwitchBtn.addEventListener("click", switchAuthMode);
 logoutBtn.addEventListener("click", handleLogout);
+if (shareLinkBtn) {
+  shareLinkBtn.addEventListener("click", createShareLink);
+}
+if (shareLinkCopy) {
+  shareLinkCopy.addEventListener("click", async () => {
+    if (!shareLinkInput) return;
+    try {
+      await navigator.clipboard.writeText(shareLinkInput.value);
+      shareLinkCopy.textContent = "Gekopieerd";
+      setTimeout(() => {
+        shareLinkCopy.textContent = "Kopieer";
+      }, 1500);
+    } catch (error) {
+      shareLinkInput.select();
+    }
+  });
+}
+if (shareLinkRevoke) {
+  shareLinkRevoke.addEventListener("click", revokeShareLink);
+}
 if (calendarPrev) {
   calendarPrev.addEventListener("click", () => changeCalendarMonth(-1));
 }
@@ -665,6 +863,7 @@ if (navToggle) {
 }
 if (quickAddBtn) {
   quickAddBtn.addEventListener("click", async () => {
+    if (isShareMode) return;
     const today = getLocalDateString();
     await addEntry({
       date: today,
@@ -676,7 +875,7 @@ if (quickAddBtn) {
 }
 
 // Auth state listener
-if (supabase) {
+if (supabase && !isShareMode) {
   supabase.auth.onAuthStateChange((event, session) => {
     if (event === 'SIGNED_IN') {
       checkAuth();
@@ -696,7 +895,15 @@ if (supabase) {
 entryDate.value = getLocalDateString();
 entryName.value = defaultDrinkName;
 
-if (supabase) {
+if (isShareMode) {
+  setReadOnlyUI();
+  if (supabase) {
+    loadSharedEntries();
+  } else if (shareBanner) {
+    shareBanner.textContent = "Supabase is niet geconfigureerd.";
+    shareBanner.style.display = "block";
+  }
+} else if (supabase) {
   checkAuth();
 } else {
   showAuthModal();

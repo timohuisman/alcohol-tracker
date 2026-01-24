@@ -130,3 +130,47 @@ Je Supabase setup is nu compleet. Open de app in je browser en je kunt:
 ### Authenticatie werkt niet
 - Controleer of email/password authenticatie is ingeschakeld in Authentication → Providers
 - Controleer of je email is geverifieerd (als email verificatie is vereist)
+
+## Delen via link (alleen lezen)
+
+Met onderstaande SQL kun je een leeslink genereren waarmee anderen je gegevens kunnen bekijken zonder te bewerken.
+
+1. Ga in Supabase naar **SQL Editor** → **New query**
+2. Plak en run:
+   ```sql
+   create table if not exists public.share_links (
+     id uuid primary key default gen_random_uuid(),
+     user_id uuid not null,
+     token text not null unique,
+     created_at timestamptz not null default now(),
+     revoked_at timestamptz
+   );
+
+   create index if not exists share_links_token_idx on public.share_links (token);
+
+   alter table public.share_links enable row level security;
+
+   create policy "Users can manage own share links"
+     on public.share_links
+     for all
+     using (auth.uid() = user_id)
+     with check (auth.uid() = user_id);
+
+   create or replace function public.get_shared_entries(share_token text)
+   returns setof public.entries
+   language sql
+   security definer
+   set search_path = public
+   as $$
+     select e.*
+     from public.entries e
+     join public.share_links s on s.user_id = e.user_id
+     where s.token = share_token
+       and s.revoked_at is null;
+   $$;
+
+   grant execute on function public.get_shared_entries(text) to anon, authenticated;
+   ```
+
+3. In de app kun je nu via het menu “Deel leeslink” een URL genereren.
+4. Wil je een link intrekken? Verwijder de rij in `share_links` of zet `revoked_at` op `now()`.

@@ -607,6 +607,52 @@ button.small {
   color: #3b3f52;
 }
 
+.share-link {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.share-link input {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid #e2e4f6;
+  background: #ffffff;
+  font-size: 13px;
+  color: #3b3f52;
+}
+
+.share-link .helper {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.share-link-status {
+  font-size: 13px;
+  color: #dc2626;
+  margin: 4px 0 0;
+}
+
+.share-banner {
+  grid-column: 1 / -1;
+  background: #fff4cc;
+  color: #7a5b00;
+  border: 1px solid #f0d68a;
+  border-radius: 14px;
+  padding: 10px 14px;
+  font-size: 13px;
+}
+
+.read-only #quickAddBtn,
+.read-only #clearData,
+.read-only .remove-day,
+.read-only .remove-entry {
+  display: none;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

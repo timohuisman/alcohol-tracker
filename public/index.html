@@ -32,6 +32,14 @@
         <div id="userInfo" class="user-info" style="display: none;">
           <p class="nav-menu-title">Gebruikersinfo</p>
           <span id="userEmail"></span>
+          <button id="shareLinkBtn" class="ghost small" type="button">Deel leeslink</button>
+          <p id="shareLinkStatus" class="share-link-status" style="display: none;"></p>
+          <div id="shareLinkWrap" class="share-link" style="display: none;">
+            <input id="shareLinkInput" type="text" readonly />
+            <button id="shareLinkCopy" class="ghost small" type="button">Kopieer</button>
+            <button id="shareLinkRevoke" class="ghost small" type="button">Intrekken</button>
+            <p class="helper">Iedereen met deze link kan je data alleen lezen.</p>
+          </div>
           <button id="logoutBtn" class="ghost small">Uitloggen</button>
         </div>
       </div>
@@ -77,6 +85,9 @@
     </header>
 
     <main class="layout">
+      <div id="shareBanner" class="share-banner" style="display: none;">
+        Je bekijkt een gedeelde, alleen-lezen weergave.
+      </div>
       <section class="card">
         <h2>Nieuwe consumptie</h2>
         <form id="entryForm" class="entry-form">
