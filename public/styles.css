@@ -485,6 +485,64 @@ button.small {
   background: currentColor;
 }
 
+.microtrend-section {
+  grid-column: 1 / -1;
+}
+
+.microtrend-section .section-header {
+  align-items: flex-start;
+}
+
+.microtrend-chart {
+  margin-top: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.microtrend-chart svg {
+  width: 100%;
+  height: 180px;
+  background: #f7f8ff;
+  border-radius: 16px;
+}
+
+.microtrend-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 12px;
+  color: #6c6f87;
+}
+
+.microtrend-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.microtrend-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: #6c6f87;
+}
+
+.microtrend-swatch.primary {
+  background: #3638f4;
+}
+
+.microtrend-swatch.baseline {
+  background: #9aa0b5;
+}
+
+.microtrend-swatch.weekend {
+  background: #f59e0b;
+}
+
+.microtrend-swatch.special {
+  background: #ef4444;
+}
+
 .distribution-section {
   width: 100%;
 }

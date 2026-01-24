@@ -143,6 +143,22 @@
         </div>
       </section>
 
+      <section class="card microtrend-section">
+        <div class="section-header">
+          <h2>Kortetermijntrend</h2>
+          <p class="helper">Aantal glazen per dag (laatste 14 dagen) vergeleken met het 8-weeks gemiddelde.</p>
+        </div>
+        <div class="microtrend-chart">
+          <svg id="microtrendChart" viewBox="0 0 420 180" preserveAspectRatio="none" aria-label="14-daagse trend"></svg>
+          <div class="microtrend-legend">
+            <span class="microtrend-legend-item"><span class="microtrend-swatch primary"></span>Laatste 14 dagen</span>
+            <span class="microtrend-legend-item"><span class="microtrend-swatch baseline"></span>8-weeks gemiddelde</span>
+            <span class="microtrend-legend-item" id="microtrendLegendWeekend"><span class="microtrend-swatch weekend"></span>Weekend</span>
+            <span class="microtrend-legend-item" id="microtrendLegendSpecial"><span class="microtrend-swatch special"></span>1e donderdag</span>
+          </div>
+        </div>
+      </section>
+
       <section class="card streak-section">
         <h2>Streaks</h2>
         <div class="insight-grid">
@@ -157,19 +173,6 @@
             <p class="insight-subtle" id="streakDrinkingRange"></p>
           </div>
         </div>
-      </section>
-
-      <section class="card distribution-section">
-        <div class="section-header">
-          <h2>Verdeling per hoeveelheid</h2>
-          <div class="distribution-controls">
-            <select id="distributionYearSelect" aria-label="Filter op jaar">
-              <option value="all">Alle jaren</option>
-            </select>
-          </div>
-        </div>
-        <p class="helper">Aantal dagen per categorie.</p>
-        <div id="distributionChart" class="distribution-chart" aria-live="polite"></div>
       </section>
 
       <section class="card year-section">
@@ -255,6 +258,19 @@
           <svg id="trendChart" viewBox="0 0 640 240" preserveAspectRatio="none" aria-label="7-daags gemiddelde grafiek"></svg>
           <div id="trendLegend" class="trend-legend"></div>
         </div>
+      </section>
+
+      <section class="card distribution-section">
+        <div class="section-header">
+          <h2>Verdeling per hoeveelheid</h2>
+          <div class="distribution-controls">
+            <select id="distributionYearSelect" aria-label="Filter op jaar">
+              <option value="all">Alle jaren</option>
+            </select>
+          </div>
+        </div>
+        <p class="helper">Aantal dagen per categorie.</p>
+        <div id="distributionChart" class="distribution-chart" aria-live="polite"></div>
       </section>
 
       <section class="card calendar-section">

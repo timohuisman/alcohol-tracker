@@ -65,6 +65,9 @@ const trendChart = document.getElementById("trendChart");
 const trendLegend = document.getElementById("trendLegend");
 const distributionChart = document.getElementById("distributionChart");
 const distributionYearSelect = document.getElementById("distributionYearSelect");
+const microtrendChart = document.getElementById("microtrendChart");
+const microtrendLegendWeekend = document.getElementById("microtrendLegendWeekend");
+const microtrendLegendSpecial = document.getElementById("microtrendLegendSpecial");
 
 // Authenticatie elementen
 const authModal = document.getElementById("authModal");
@@ -206,6 +209,9 @@ const addDays = (date, days) => {
   next.setDate(next.getDate() + days);
   return next;
 };
+
+const getISODate = (date) =>
+  formatDateString(date.getFullYear(), date.getMonth(), date.getDate());
 
 const formatMonthLabel = (year, month) =>
   new Date(year, month, 1).toLocaleDateString("nl-NL", { month: "long" });
@@ -384,6 +390,133 @@ const renderDistribution = (entries) => {
 
     distributionChart.appendChild(row);
   });
+};
+
+const renderMicrotrend = (entries) => {
+  if (!microtrendChart) return;
+  microtrendChart.innerHTML = "";
+
+  const grouped = groupByDay(entries);
+  const today = new Date();
+  const last56 = [];
+  for (let i = 55; i >= 0; i -= 1) {
+    const date = addDays(today, -i);
+    const dateStr = getISODate(date);
+    const total = calculateTotal(
+      (grouped[dateStr] || []).filter((entry) => Number.isFinite(entry.units)),
+    );
+    last56.push({ date, total });
+  }
+
+  const last14 = last56.slice(-14);
+  const avg56 = last56.length
+    ? last56.reduce((sum, value) => sum + value.total, 0) / last56.length
+    : 0;
+
+  const svgWidth = 420;
+  const svgHeight = 180;
+  const paddingTop = 16;
+  const paddingRight = 16;
+  const paddingBottom = 20;
+  const paddingLeft = 38;
+  const plotWidth = svgWidth - paddingLeft - paddingRight;
+  const plotHeight = svgHeight - paddingTop - paddingBottom;
+
+  const maxValue = Math.max(1, avg56, ...last14.map((item) => item.total));
+  const toX = (index) => paddingLeft + (index / Math.max(last14.length - 1, 1)) * plotWidth;
+  const toY = (value) => paddingTop + (1 - value / maxValue) * plotHeight;
+
+  const gridCount = 3;
+  for (let i = 0; i <= gridCount; i += 1) {
+    const y = paddingTop + (i / gridCount) * plotHeight;
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.setAttribute("x1", String(paddingLeft));
+    line.setAttribute("x2", String(svgWidth - paddingRight));
+    line.setAttribute("y1", String(y));
+    line.setAttribute("y2", String(y));
+    line.setAttribute("stroke", "#e2e4f6");
+    line.setAttribute("stroke-width", "1");
+    microtrendChart.appendChild(line);
+
+    const value = Math.round((1 - i / gridCount) * maxValue);
+    const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    label.setAttribute("x", String(paddingLeft - 6));
+    label.setAttribute("y", String(y + 4));
+    label.setAttribute("text-anchor", "end");
+    label.setAttribute("fill", "#6c6f87");
+    label.setAttribute("font-size", "10");
+    label.textContent = formatNumber(value);
+    microtrendChart.appendChild(label);
+  }
+
+  const baseline = document.createElementNS("http://www.w3.org/2000/svg", "line");
+  baseline.setAttribute("x1", String(paddingLeft));
+  baseline.setAttribute("x2", String(svgWidth - paddingRight));
+  baseline.setAttribute("y1", String(toY(avg56)));
+  baseline.setAttribute("y2", String(toY(avg56)));
+  baseline.setAttribute("stroke", "#9aa0b5");
+  baseline.setAttribute("stroke-width", "2");
+  baseline.setAttribute("stroke-dasharray", "4 6");
+  microtrendChart.appendChild(baseline);
+
+  if (last14.some((item) => item.total > 0)) {
+    let hasWeekend = false;
+    let hasSpecial = false;
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    const d = last14
+      .map((item, i) => `${i === 0 ? "M" : "L"}${toX(i)} ${toY(item.total)}`)
+      .join(" ");
+    path.setAttribute("d", d);
+    path.setAttribute("fill", "none");
+    path.setAttribute("stroke", "#3638f4");
+    path.setAttribute("stroke-width", "2.5");
+    path.setAttribute("stroke-linecap", "round");
+    path.setAttribute("stroke-linejoin", "round");
+    microtrendChart.appendChild(path);
+
+    last14.forEach((item, i) => {
+      const day = item.date.getDay();
+      const isWeekend = day === 0 || day === 6;
+      const isFirstThursday = day === 4 && item.date.getDate() <= 7;
+      if (isWeekend) hasWeekend = true;
+      if (isFirstThursday && item.total > 5) hasSpecial = true;
+      let color = "#3638f4";
+      let radius = 2.5;
+      if (isWeekend) {
+        color = "#f59e0b";
+        radius = 3.5;
+      }
+      if (isFirstThursday && item.total > 5) {
+        color = "#ef4444";
+        radius = 4;
+      }
+      const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      circle.setAttribute("cx", String(toX(i)));
+      circle.setAttribute("cy", String(toY(item.total)));
+      circle.setAttribute("r", String(radius));
+      circle.setAttribute("fill", color);
+      circle.setAttribute("stroke", "#ffffff");
+      circle.setAttribute("stroke-width", "1");
+      microtrendChart.appendChild(circle);
+    });
+
+    if (microtrendLegendWeekend) {
+      microtrendLegendWeekend.style.display = hasWeekend ? "inline-flex" : "none";
+    }
+    if (microtrendLegendSpecial) {
+      microtrendLegendSpecial.style.display = hasSpecial ? "inline-flex" : "none";
+    }
+  } else {
+    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    text.setAttribute("x", String(svgWidth / 2));
+    text.setAttribute("y", String(svgHeight / 2));
+    text.setAttribute("text-anchor", "middle");
+    text.setAttribute("fill", "#6c6f87");
+    text.textContent = "Nog geen data om te tonen.";
+    microtrendChart.appendChild(text);
+    if (microtrendLegendWeekend) microtrendLegendWeekend.style.display = "none";
+    if (microtrendLegendSpecial) microtrendLegendSpecial.style.display = "none";
+  }
 };
 
 const buildYearSeries = (entries) => {
@@ -1502,6 +1635,7 @@ const render = () => {
   const availableYears = getAvailableYears(entries);
   updateDistributionYearOptions(availableYears);
   renderDistribution(entries);
+  renderMicrotrend(entries);
   updateYearOptions(availableYears);
   updateYearControls(availableYears);
   renderYearOverview(entries);
