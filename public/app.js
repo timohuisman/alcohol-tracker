@@ -1,4 +1,3 @@
-const STORAGE_KEY = "alcohol-tracker-entries";
 
 const entryForm = document.getElementById("entryForm");
 const entryDate = document.getElementById("entryDate");
@@ -60,6 +59,127 @@ const formatDate = (dateString) => {
 const calculateTotal = (entries) =>
   entries.reduce((sum, entry) => sum + entry.units, 0);
 
+const getColorClass = (drinkCount) => {
+  if (drinkCount === 0) return "color-none";
+  if (drinkCount <= 2) return "color-low";
+  if (drinkCount <= 5) return "color-medium";
+  if (drinkCount <= 9) return "color-high";
+  return "color-very-high";
+};
+
+const getDaysInMonth = (year, month) => {
+  return new Date(year, month + 1, 0).getDate();
+};
+
+const getFirstDayOfMonth = (year, month) => {
+  const day = new Date(year, month, 1).getDay();
+  return (day + 6) % 7; // Converteer zondag=0 naar maandag=0
+};
+
+const formatMonthYear = (year, month) => {
+  const date = new Date(year, month, 1);
+  return date.toLocaleDateString("nl-NL", {
+    month: "long",
+    year: "numeric",
+  });
+};
+
+// Render functies
+const renderCalendar = (entries) => {
+  const grouped = groupByDay(entries);
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+
+  calendarContainer.innerHTML = "";
+
+  const monthContainer = document.createElement("div");
+  monthContainer.className = "calendar-month";
+
+  const monthTitle = document.createElement("h3");
+  monthTitle.className = "calendar-month-title";
+  monthTitle.textContent = formatMonthYear(currentYear, currentMonth);
+  monthContainer.appendChild(monthTitle);
+
+  const weekdayHeader = document.createElement("div");
+  weekdayHeader.className = "calendar-header";
+  const weekdays = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
+  weekdays.forEach((day) => {
+    const dayHeader = document.createElement("div");
+    dayHeader.className = "calendar-weekday";
+    dayHeader.textContent = day;
+    weekdayHeader.appendChild(dayHeader);
+  });
+  monthContainer.appendChild(weekdayHeader);
+
+  const grid = document.createElement("div");
+  grid.className = "calendar-grid";
+
+  const daysInMonth = getDaysInMonth(currentYear, currentMonth);
+  const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
+  const today = new Date();
+  const todayDate = today.getDate();
+  const todayMonth = today.getMonth();
+  const todayYear = today.getFullYear();
+  const isCurrentMonth = currentYear === todayYear && currentMonth === todayMonth;
+
+  const allDays = [];
+
+  for (let i = 0; i < firstDay; i++) {
+    allDays.push(null);
+  }
+
+  const lastDayToShow = isCurrentMonth ? todayDate : daysInMonth;
+  for (let day = 1; day <= lastDayToShow; day++) {
+    allDays.push(day);
+  }
+
+  const weeks = [];
+  for (let i = 0; i < allDays.length; i += 7) {
+    const week = allDays.slice(i, i + 7);
+    if (week.some((day) => day !== null)) {
+      weeks.push(week);
+    }
+  }
+
+  weeks.reverse().forEach((week) => {
+    week.forEach((day) => {
+      if (day === null) {
+        const emptyDay = document.createElement("div");
+        emptyDay.className = "calendar-day empty";
+        grid.appendChild(emptyDay);
+      } else {
+        const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+        const dayEntries = grouped[dateStr] || [];
+        const drinkCount = calculateTotal(dayEntries);
+        const colorClass = getColorClass(drinkCount);
+
+        const dayElement = document.createElement("div");
+        dayElement.className = `calendar-day ${colorClass}`;
+        dayElement.setAttribute("data-date", dateStr);
+        dayElement.setAttribute("title", `${dateStr}: ${formatNumber(drinkCount)} standaardglazen`);
+
+        const dayNumber = document.createElement("div");
+        dayNumber.className = "calendar-day-number";
+        dayNumber.textContent = day;
+        dayElement.appendChild(dayNumber);
+
+        if (drinkCount > 0) {
+          const dayCount = document.createElement("div");
+          dayCount.className = "calendar-day-count";
+          dayCount.textContent = `${formatNumber(drinkCount)}`;
+          dayElement.appendChild(dayCount);
+        }
+
+        grid.appendChild(dayElement);
+      }
+    });
+  });
+
+  monthContainer.appendChild(grid);
+  calendarContainer.appendChild(monthContainer);
+};
+
 const render = () => {
   const entries = parseStorage();
   const grouped = groupByDay(entries);
@@ -106,6 +226,7 @@ const render = () => {
   });
 
   updateInsights(entries);
+  renderCalendar(entries);
 };
 
 const updateInsights = (entries) => {

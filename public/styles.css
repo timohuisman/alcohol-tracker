@@ -198,6 +198,121 @@ button.small {
   gap: 6px;
 }
 
+.calendar-section {
+  grid-column: 1 / -1;
+}
+
+.calendar-container {
+  margin-top: 16px;
+  display: grid;
+  gap: 32px;
+}
+
+.calendar-month {
+  display: grid;
+  gap: 12px;
+}
+
+.calendar-month-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1c1d2a;
+  margin: 0;
+  text-transform: capitalize;
+}
+
+.calendar-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.calendar-weekday {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6c6f87;
+  padding: 8px 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.calendar-day {
+  aspect-ratio: 1;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 4px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 1px solid transparent;
+  position: relative;
+}
+
+.calendar-day:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1;
+}
+
+.calendar-day-number {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.calendar-day-count {
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+.calendar-day.empty {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.calendar-day.empty:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Kleurcodering: grijs/blauw → groen → geel → rood → zwart */
+.calendar-day.color-none {
+  background: #e8eaf0;
+  color: #6c6f87;
+  border-color: #d7d9e6;
+}
+
+.calendar-day.color-low {
+  background: #4ade80;
+  color: #ffffff;
+}
+
+.calendar-day.color-medium {
+  background: #fbbf24;
+  color: #ffffff;
+}
+
+.calendar-day.color-high {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.calendar-day.color-very-high {
+  background: #1c1d2a;
+  color: #ffffff;
+}
+
 .insights {
   grid-column: 1 / -1;
 }
