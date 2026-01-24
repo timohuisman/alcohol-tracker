@@ -13,7 +13,7 @@ if (typeof SUPABASE_URL !== 'undefined' && SUPABASE_URL !== 'YOUR_SUPABASE_URL' 
     typeof SUPABASE_ANON_KEY !== 'undefined' && SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY') {
   supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 } else {
-  console.error('Supabase is niet geconfigureerd. Vul supabase-config.local.js in met je credentials.');
+  console.error('Supabase is niet geconfigureerd. Vul supabase-config.local.js (lokaal) of supabase-config.js (productie) in met je credentials.');
 }
 
 // DOM elementen
@@ -151,7 +151,7 @@ const handleAuth = async (e) => {
   hideAuthError();
 
   if (!supabase) {
-    showAuthError('Supabase is niet geconfigureerd. Controleer supabase-config.local.js');
+    showAuthError('Supabase is niet geconfigureerd. Controleer supabase-config.local.js of supabase-config.js');
     return;
   }
 

@@ -63,7 +63,17 @@ ddev launch
 
 Of handmatig: `https://alcohol-tracker.ddev.site`
 
-### 4. Deployen
+### 4. Deployen (GitHub Pages)
+
+Voor GitHub Pages heb je een productieconfig nodig in `public/supabase-config.js`:
+
+1. Kopieer `public/supabase-config.example.js` naar `public/supabase-config.js`
+2. Vul je Supabase URL + anon key in
+3. Commit en push
+
+Let op: `public/supabase-config.local.js` blijft lokaal en is git‑ignored.
+
+### 5. Deployen (overige)
 
 Je kunt de app deployen naar:
 - **Netlify**: Sleep de `public` folder naar Netlify Drop
@@ -92,6 +102,7 @@ Je kunt de app deployen naar:
 - `public/app.js` - JavaScript logica
 - `public/styles.css` - Styling
 - `public/supabase-config.local.js` - Lokale Supabase configuratie (niet mee gecommit)
+- `public/supabase-config.js` - Productie Supabase configuratie (mee gecommit voor GitHub Pages)
 - `public/supabase-config.example.js` - Voorbeeld Supabase configuratie
 - `SUPABASE_SETUP.md` - Gedetailleerde Supabase setup instructies
 - `DATABASE_OPTIES.md` - Overzicht van database opties

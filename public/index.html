@@ -139,7 +139,31 @@
       </li>
     </template>
 
-    <script src="supabase-config.local.js"></script>
-    <script src="app.js"></script>
+    <script>
+      (function () {
+        const loadScript = (src) =>
+          new Promise((resolve, reject) => {
+            const script = document.createElement("script");
+            script.src = src;
+            script.onload = resolve;
+            script.onerror = reject;
+            document.head.appendChild(script);
+          });
+
+        const loadConfig = async () => {
+          try {
+            await loadScript("supabase-config.local.js");
+          } catch (error) {
+            await loadScript("supabase-config.js");
+          }
+        };
+
+        loadConfig()
+          .then(() => loadScript("app.js"))
+          .catch((error) => {
+            console.error("Supabase config kon niet worden geladen.", error);
+          });
+      })();
+    </script>
   </body>
 </html>
