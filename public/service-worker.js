@@ -2,14 +2,14 @@ const CACHE_VERSION = "v1";
 const STATIC_CACHE = `alcohol-tracker-static-${CACHE_VERSION}`;
 
 const STATIC_ASSETS = [
-  "/",
-  "/index.html",
-  "/styles.css",
-  "/app.js",
-  "/supabase-config.js",
-  "/manifest.webmanifest",
-  "/icons/icon.svg",
-  "/icons/icon-maskable.svg",
+  "./",
+  "./index.html",
+  "./styles.css",
+  "./app.js",
+  "./supabase-config.js",
+  "./manifest.webmanifest",
+  "./icons/icon.svg",
+  "./icons/icon-maskable.svg",
 ];
 
 self.addEventListener("install", (event) => {
@@ -50,7 +50,7 @@ self.addEventListener("fetch", (event) => {
           caches.open(STATIC_CACHE).then((cache) => cache.put(request, responseClone));
           return response;
         })
-        .catch(() => caches.match("/index.html"))
+        .catch(() => caches.match("./index.html"))
     );
     return;
   }
