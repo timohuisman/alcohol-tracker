@@ -48,6 +48,7 @@ const logoutBtn = document.getElementById("logoutBtn");
 let isSignUp = false;
 let entries = [];
 let realtimeSubscription = null;
+const defaultDrinkName = "Bier";
 
 // Utility functies
 const formatNumber = (value) => value.toLocaleString("nl-NL", {
@@ -567,6 +568,7 @@ entryForm.addEventListener("submit", async (event) => {
 
   await addEntry(newEntry);
   entryForm.reset();
+  entryName.value = defaultDrinkName;
   entryUnits.value = "1";
   entryDate.value = new Date().toISOString().slice(0, 10);
 });
@@ -603,6 +605,7 @@ if (supabase) {
 
 // Initialisatie
 entryDate.value = new Date().toISOString().slice(0, 10);
+entryName.value = defaultDrinkName;
 
 if (supabase) {
   checkAuth();
