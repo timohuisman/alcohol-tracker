@@ -32,7 +32,6 @@ const todayTotal = document.getElementById("todayTotal");
 const averagePerDay = document.getElementById("averagePerDay");
 const totalRecorded = document.getElementById("totalRecorded");
 const topDay = document.getElementById("topDay");
-const clearData = document.getElementById("clearData");
 const calendarContainer = document.getElementById("calendarContainer");
 const calendarTitle = document.getElementById("calendarTitle");
 const calendarPrev = document.getElementById("calendarPrev");
@@ -886,7 +885,6 @@ const setReadOnlyUI = () => {
   if (authModal) authModal.style.display = "none";
   if (entryModal) entryModal.style.display = "none";
   if (quickAddBtn) quickAddBtn.style.display = "none";
-  if (clearData) clearData.style.display = "none";
 };
 
 const showShareLink = (token) => {
@@ -1262,29 +1260,6 @@ const deleteDayEntries = async (date) => {
   }
 };
 
-const clearAllEntries = async () => {
-  if (!supabase) return;
-  if (isShareMode) return;
-
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-
-    const { error } = await supabase
-      .from('entries')
-      .delete()
-      .eq('user_id', session.user.id);
-
-    if (error) throw error;
-
-    entries = [];
-    render();
-  } catch (error) {
-    console.error('Fout bij wissen alle entries:', error);
-    showAuthError('Kon gegevens niet wissen: ' + error.message);
-  }
-};
-
 // Real-time synchronisatie
 const setupRealtime = async () => {
   if (!supabase || realtimeSubscription) return;
@@ -1566,16 +1541,6 @@ entryForm.addEventListener("submit", async (event) => {
   entryUnits.value = "1";
   entryDate.value = getLocalDateString();
   closeEntryModal();
-});
-
-clearData.addEventListener("click", () => {
-  if (isShareMode) return;
-  const shouldClear = window.confirm(
-    "Weet je zeker dat je alle gegevens wilt verwijderen?",
-  );
-  if (shouldClear) {
-    clearAllEntries();
-  }
 });
 
 authForm.addEventListener("submit", handleAuth);
