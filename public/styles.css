@@ -210,14 +210,18 @@ button.small {
 }
 
 .calendar-container {
+  --calendar-gap: clamp(1px, 0.9vw, 5px);
+  --calendar-day-padding: clamp(1px, 0.9vw, 6px);
+  --calendar-weekday-size: clamp(8px, 2vw, 12px);
+  --calendar-number-size: clamp(9px, 2.4vw, 14px);
+  --calendar-count-size: clamp(8px, 1.9vw, 11px);
   margin-top: 16px;
   display: grid;
   gap: 32px;
 }
 
 .calendar-month {
-  display: grid;
-  gap: 12px;
+  display: block;
 }
 
 .calendar-month-title {
@@ -226,18 +230,19 @@ button.small {
   color: #1c1d2a;
   margin: 0;
   text-transform: capitalize;
+  margin-bottom: 12px;
 }
 
 .calendar-header {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
+  gap: var(--calendar-gap);
   margin-bottom: 8px;
 }
 
 .calendar-weekday {
   text-align: center;
-  font-size: 12px;
+  font-size: var(--calendar-weekday-size);
   font-weight: 600;
   color: #6c6f87;
   padding: 8px 4px;
@@ -248,7 +253,7 @@ button.small {
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
+  gap: var(--calendar-gap);
 }
 
 .calendar-day {
@@ -258,7 +263,7 @@ button.small {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 8px 4px;
+  padding: var(--calendar-day-padding);
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
   border: 1px solid transparent;
@@ -272,13 +277,13 @@ button.small {
 }
 
 .calendar-day-number {
-  font-size: 14px;
+  font-size: var(--calendar-number-size);
   font-weight: 600;
   margin-bottom: 2px;
 }
 
 .calendar-day-count {
-  font-size: 11px;
+  font-size: var(--calendar-count-size);
   font-weight: 500;
   opacity: 0.9;
 }
@@ -433,5 +438,20 @@ button.small {
 
   .auth-modal-content {
     padding: 24px;
+  }
+}
+
+@media (max-width: 520px) {
+  .calendar-container {
+    gap: 20px;
+  }
+
+  .calendar-weekday {
+    padding: 6px 2px;
+    letter-spacing: 0.03em;
+  }
+
+  .calendar-day {
+    border-radius: 6px;
   }
 }
