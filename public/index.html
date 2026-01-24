@@ -166,6 +166,46 @@
         </div>
       </section>
 
+      <section class="card month-section">
+        <div class="section-header">
+          <h2>Maandoverzicht</h2>
+          <div class="month-controls">
+            <button id="monthPrev" class="ghost small" type="button" aria-label="Vorige maand">←</button>
+            <select id="monthSelect" aria-label="Selecteer maand"></select>
+            <select id="monthYearSelect" aria-label="Selecteer jaar"></select>
+            <button id="monthNext" class="ghost small" type="button" aria-label="Volgende maand">→</button>
+          </div>
+        </div>
+        <div class="insight-grid month-grid">
+          <div>
+            <p class="insight-label">Totaal deze maand</p>
+            <p class="insight-value" id="monthTotal">0</p>
+          </div>
+          <div>
+            <p class="insight-label">Gemiddeld per geregistreerde dag</p>
+            <p class="insight-value" id="monthAverage">0</p>
+          </div>
+          <div>
+            <p class="insight-label">Dagen met 1+ registraties</p>
+            <p class="insight-value" id="monthActiveDays">0</p>
+            <p class="insight-subtle" id="monthActiveDaysTotal"></p>
+          </div>
+          <div>
+            <p class="insight-label">Dag met meeste drankjes</p>
+            <p class="insight-value" id="monthTopDay">-</p>
+          </div>
+          <div>
+            <p class="insight-label">Meest actieve weekdag</p>
+            <p class="insight-value" id="monthTopWeekday">-</p>
+          </div>
+          <div>
+            <p class="insight-label">Verschil t.o.v. vorige maand</p>
+            <p class="insight-value" id="monthDelta">-</p>
+            <p class="insight-subtle" id="monthDeltaSub"></p>
+          </div>
+        </div>
+      </section>
+
       <section class="card calendar-section">
         <h2>Kalenderweergave</h2>
         <div class="calendar-controls">
