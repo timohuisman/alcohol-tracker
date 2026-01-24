@@ -34,6 +34,10 @@ const calendarContainer = document.getElementById("calendarContainer");
 const calendarTitle = document.getElementById("calendarTitle");
 const calendarPrev = document.getElementById("calendarPrev");
 const calendarNext = document.getElementById("calendarNext");
+const streakSober = document.getElementById("streakSober");
+const streakDrinking = document.getElementById("streakDrinking");
+const streakSoberRange = document.getElementById("streakSoberRange");
+const streakDrinkingRange = document.getElementById("streakDrinkingRange");
 const yearSelect = document.getElementById("yearSelect");
 const yearPrev = document.getElementById("yearPrev");
 const yearNext = document.getElementById("yearNext");
@@ -166,6 +170,38 @@ const formatDateString = (year, month, day) => {
   return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 };
 
+const formatShortDate = (date, includeYear = false) =>
+  date.toLocaleDateString("nl-NL", {
+    day: "numeric",
+    month: "short",
+    ...(includeYear ? { year: "numeric" } : {}),
+  });
+
+const getMonthShort = (date) =>
+  date.toLocaleDateString("nl-NL", { month: "short" });
+
+const formatShortRange = (start, end) => {
+  if (!start || !end) return "";
+  const sameYear = start.getFullYear() === end.getFullYear();
+  const sameMonth = sameYear && start.getMonth() === end.getMonth();
+  if (start.getTime() === end.getTime()) {
+    return formatShortDate(start, true);
+  }
+  if (sameMonth) {
+    return `${start.getDate()}–${end.getDate()} ${getMonthShort(end)} ${end.getFullYear()}`;
+  }
+  if (sameYear) {
+    return `${start.getDate()} ${getMonthShort(start)}–${end.getDate()} ${getMonthShort(end)} ${end.getFullYear()}`;
+  }
+  return `${start.getDate()} ${getMonthShort(start)} ${start.getFullYear()}–${end.getDate()} ${getMonthShort(end)} ${end.getFullYear()}`;
+};
+
+const addDays = (date, days) => {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+};
+
 const formatMonthLabel = (year, month) =>
   new Date(year, month, 1).toLocaleDateString("nl-NL", { month: "long" });
 
@@ -201,6 +237,92 @@ const getDayOfYear = (dateString) => {
   const start = new Date(date.getFullYear(), 0, 1);
   const diff = date.setHours(0, 0, 0, 0) - start.getTime();
   return Math.floor(diff / 86400000) + 1;
+};
+
+const getDateRange = (entries) => {
+  if (!entries.length) return null;
+  let min = null;
+  let max = null;
+  entries.forEach((entry) => {
+    if (!entry?.date) return;
+    const date = new Date(entry.date);
+    if (Number.isNaN(date.getTime())) return;
+    if (!min || date < min) min = date;
+    if (!max || date > max) max = date;
+  });
+  if (!min || !max) return null;
+  return { start: min, end: max };
+};
+
+const renderStreaks = (entries) => {
+  if (!streakSober || !streakDrinking || !streakSoberRange || !streakDrinkingRange) return;
+  if (!entries.length) {
+    streakSober.textContent = "-";
+    streakDrinking.textContent = "-";
+    streakSoberRange.textContent = "";
+    streakDrinkingRange.textContent = "";
+    return;
+  }
+
+  const range = getDateRange(entries);
+  if (!range) {
+    streakSober.textContent = "-";
+    streakDrinking.textContent = "-";
+    return;
+  }
+
+  const today = new Date();
+  const endDate = range.end > today ? range.end : today;
+  const grouped = groupByDay(entries);
+
+  let currentSober = 0;
+  let longestSober = 0;
+  let currentDrinking = 0;
+  let longestDrinking = 0;
+  let currentSoberStart = null;
+  let currentDrinkingStart = null;
+  let longestSoberRange = null;
+  let longestDrinkingRange = null;
+
+  for (let cursor = new Date(range.start); cursor <= endDate; cursor = addDays(cursor, 1)) {
+    const dateStr = formatDateString(cursor.getFullYear(), cursor.getMonth(), cursor.getDate());
+    const dayEntries = (grouped[dateStr] || []).filter((entry) => Number.isFinite(entry.units));
+    const total = calculateTotal(dayEntries);
+    if (total > 0) {
+      if (currentDrinking === 0) currentDrinkingStart = new Date(cursor);
+      currentDrinking += 1;
+      currentSober = 0;
+      currentSoberStart = null;
+      if (currentDrinking > longestDrinking) {
+        longestDrinking = currentDrinking;
+        longestDrinkingRange = { start: new Date(currentDrinkingStart), end: new Date(cursor) };
+      }
+    } else {
+      if (currentSober === 0) currentSoberStart = new Date(cursor);
+      currentSober += 1;
+      currentDrinking = 0;
+      currentDrinkingStart = null;
+      if (currentSober > longestSober) {
+        longestSober = currentSober;
+        longestSoberRange = { start: new Date(currentSoberStart), end: new Date(cursor) };
+      }
+    }
+  }
+
+  streakSober.textContent = `${formatNumber(longestSober)} dagen`;
+  streakDrinking.textContent = `${formatNumber(longestDrinking)} dagen`;
+  if (longestSoberRange) {
+    const rangeLabel = formatShortRange(longestSoberRange.start, longestSoberRange.end);
+    streakSoberRange.textContent = rangeLabel;
+  } else {
+    streakSoberRange.textContent = "";
+  }
+  if (longestDrinkingRange) {
+    const rangeLabel = formatShortRange(longestDrinkingRange.start, longestDrinkingRange.end);
+    streakDrinkingRange.textContent = rangeLabel;
+  } else {
+    streakDrinkingRange.textContent = "";
+  }
 };
 
 const buildYearSeries = (entries) => {
@@ -1287,6 +1409,7 @@ const render = () => {
   });
 
   updateInsights(entries);
+  renderStreaks(entries);
   const availableYears = getAvailableYears(entries);
   updateYearOptions(availableYears);
   updateYearControls(availableYears);
