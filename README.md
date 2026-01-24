@@ -73,6 +73,13 @@ Voor GitHub Pages heb je een productieconfig nodig in `public/supabase-config.js
 
 Let op: `public/supabase-config.local.js` blijft lokaal en is git‑ignored.
 
+### 5. PWA (installeren op telefoon)
+
+De app bevat een PWA manifest en service worker. Na deployment kun je op je telefoon via de browser
+de app installeren op je homescreen (bijv. “Add to Home Screen”).
+
+Let op: service workers werken alleen via `http://localhost` of `https://` (niet via `file://`).
+
 ### 5. Deployen (overige)
 
 Je kunt de app deployen naar:

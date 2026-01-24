@@ -4,6 +4,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Alcohol Tracker</title>
+    <meta name="theme-color" content="#2a1a16" />
+    <link rel="manifest" href="manifest.webmanifest" />
     <link rel="stylesheet" href="styles.css" />
     <!-- Supabase client library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -160,6 +162,13 @@
 
         loadConfig()
           .then(() => loadScript("app.js"))
+          .then(() => {
+            if ("serviceWorker" in navigator) {
+              navigator.serviceWorker.register("service-worker.js").catch((error) => {
+                console.warn("Service worker registratie mislukt", error);
+              });
+            }
+          })
           .catch((error) => {
             console.error("Supabase config kon niet worden geladen.", error);
           });

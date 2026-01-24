@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Alcohol Tracker">
+  <rect width="512" height="512" fill="#2a1a16" />
+  <g fill="#f4f0ec">
+    <path d="M178 128h156v38l-28 46v138c0 54-44 98-98 98s-98-44-98-98V212l-28-46v-38h96zm30 84 16 26v112c0 32 26 58 58 58s58-26 58-58V238l16-26H208z"/>
+    <rect x="206" y="96" width="100" height="24" rx="12"/>
+  </g>
+</svg>
