@@ -14,6 +14,7 @@
 body {
   margin: 0;
   padding: var(--page-padding) var(--page-padding) 64px;
+  overflow-x: clip;
 }
 
 h1,
