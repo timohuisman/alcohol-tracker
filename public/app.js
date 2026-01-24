@@ -45,6 +45,7 @@ const userEmail = document.getElementById("userEmail");
 const logoutBtn = document.getElementById("logoutBtn");
 const navToggle = document.getElementById("navToggle");
 const navMenu = document.getElementById("navMenu");
+const quickAddBtn = document.getElementById("quickAddBtn");
 
 // State
 let isSignUp = false;
@@ -595,6 +596,17 @@ authSwitchBtn.addEventListener("click", switchAuthMode);
 logoutBtn.addEventListener("click", handleLogout);
 if (navToggle) {
   navToggle.addEventListener("click", toggleNavMenu);
+}
+if (quickAddBtn) {
+  quickAddBtn.addEventListener("click", async () => {
+    const today = new Date().toISOString().slice(0, 10);
+    await addEntry({
+      date: today,
+      name: defaultDrinkName,
+      units: 1,
+      note: "",
+    });
+  });
 }
 
 // Auth state listener

@@ -73,6 +73,36 @@ p {
   gap: 4px;
 }
 
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-quick {
+  background: #ffb347;
+  color: #2a1a16;
+  border: 1px solid #f2a23d;
+  padding: 9px 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+}
+
+.nav-quick:hover {
+  background: #ff9f1a;
+  border-color: #e38a12;
+}
+
+.nav-quick-icon {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
 .nav-toggle-bar {
   width: 20px;
   height: 2px;

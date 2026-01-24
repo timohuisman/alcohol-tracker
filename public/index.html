@@ -14,12 +14,19 @@
     <nav class="top-nav">
       <div class="nav-inner">
         <div class="nav-brand">Alcohol Tracker</div>
-        <button class="nav-toggle" type="button" id="navToggle" aria-expanded="false" aria-controls="navMenu">
-          <span class="nav-toggle-bar"></span>
-          <span class="nav-toggle-bar"></span>
-          <span class="nav-toggle-bar"></span>
-          <span class="sr-only">Menu</span>
-        </button>
+        <div class="nav-actions">
+          <button class="nav-quick" type="button" id="quickAddBtn" aria-label="Nieuwe consumptie" title="Nieuwe consumptie">
+            <svg class="nav-quick-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M4 3h16l-6.8 8.2V20a1 1 0 0 1-1.5.86l-2.4-1.4a1 1 0 0 1-.5-.86v-7.4L4 3zm4.6 2 3.4 4.1L15.4 5H8.6z"></path>
+            </svg>
+          </button>
+          <button class="nav-toggle" type="button" id="navToggle" aria-expanded="false" aria-controls="navMenu">
+            <span class="nav-toggle-bar"></span>
+            <span class="nav-toggle-bar"></span>
+            <span class="nav-toggle-bar"></span>
+            <span class="sr-only">Menu</span>
+          </button>
+        </div>
       </div>
       <div class="nav-menu" id="navMenu">
         <div id="userInfo" class="user-info" style="display: none;">
