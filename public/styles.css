@@ -705,6 +705,17 @@ button.small {
   filter: grayscale(0.2);
 }
 
+.calendar-day.future {
+  opacity: 0.5;
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(28, 29, 42, 0.08),
+    rgba(28, 29, 42, 0.08) 6px,
+    transparent 6px,
+    transparent 12px
+  );
+}
+
 .calendar-day.today {
   outline: 2px solid #3638f4;
   outline-offset: -2px;

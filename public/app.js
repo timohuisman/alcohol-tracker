@@ -1527,6 +1527,9 @@ const renderCalendar = (entries) => {
       if (dateStr === today) {
         dayElement.classList.add("today");
       }
+      if (dateStr > today) {
+        dayElement.classList.add("future");
+      }
 
       const dayNumber = document.createElement("div");
       dayNumber.className = "calendar-day-number";
