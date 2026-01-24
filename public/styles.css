@@ -333,9 +333,24 @@ button.small {
   --calendar-weekday-size: clamp(8px, 2vw, 12px);
   --calendar-number-size: clamp(9px, 2.4vw, 14px);
   --calendar-count-size: clamp(8px, 1.9vw, 11px);
-  margin-top: 16px;
+  margin-top: 12px;
   display: grid;
   gap: 32px;
+}
+
+.calendar-controls {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.calendar-controls .ghost.small {
+  min-width: 36px;
+  height: 36px;
+  padding: 0;
+  font-size: 16px;
 }
 
 .calendar-month {
@@ -348,7 +363,6 @@ button.small {
   color: #1c1d2a;
   margin: 0;
   text-transform: capitalize;
-  margin-bottom: 12px;
 }
 
 .calendar-header {

@@ -31,6 +31,9 @@ const totalRecorded = document.getElementById("totalRecorded");
 const topDay = document.getElementById("topDay");
 const clearData = document.getElementById("clearData");
 const calendarContainer = document.getElementById("calendarContainer");
+const calendarTitle = document.getElementById("calendarTitle");
+const calendarPrev = document.getElementById("calendarPrev");
+const calendarNext = document.getElementById("calendarNext");
 
 // Authenticatie elementen
 const authModal = document.getElementById("authModal");
@@ -52,6 +55,8 @@ let isSignUp = false;
 let entries = [];
 let realtimeSubscription = null;
 const defaultDrinkName = "Bier";
+let calendarYear = new Date().getFullYear();
+let calendarMonth = new Date().getMonth();
 
 // Utility functies
 const formatNumber = (value) => value.toLocaleString("nl-NL", {
@@ -126,6 +131,12 @@ const formatMonthYear = (year, month) => {
 
 const formatDateString = (year, month, day) => {
   return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+};
+
+const updateCalendarTitle = (year, month) => {
+  if (calendarTitle) {
+    calendarTitle.textContent = formatMonthYear(year, month);
+  }
 };
 
 // Authenticatie functies
@@ -411,19 +422,22 @@ const setupRealtime = async () => {
 // Render functies
 const renderCalendar = (entries) => {
   const grouped = groupByDay(entries);
-  const now = new Date();
-  const currentYear = now.getFullYear();
-  const currentMonth = now.getMonth();
+  const currentYear = calendarYear;
+  const currentMonth = calendarMonth;
 
   calendarContainer.innerHTML = "";
 
   const monthContainer = document.createElement("div");
   monthContainer.className = "calendar-month";
 
-  const monthTitle = document.createElement("h3");
-  monthTitle.className = "calendar-month-title";
-  monthTitle.textContent = formatMonthYear(currentYear, currentMonth);
-  monthContainer.appendChild(monthTitle);
+  if (!calendarTitle) {
+    const monthTitle = document.createElement("h3");
+    monthTitle.className = "calendar-month-title";
+    monthTitle.textContent = formatMonthYear(currentYear, currentMonth);
+    monthContainer.appendChild(monthTitle);
+  } else {
+    updateCalendarTitle(currentYear, currentMonth);
+  }
 
   const weekdayHeader = document.createElement("div");
   weekdayHeader.className = "calendar-header";
@@ -514,6 +528,13 @@ const renderCalendar = (entries) => {
 
   monthContainer.appendChild(grid);
   calendarContainer.appendChild(monthContainer);
+};
+
+const changeCalendarMonth = (offset) => {
+  const nextDate = new Date(calendarYear, calendarMonth + offset, 1);
+  calendarYear = nextDate.getFullYear();
+  calendarMonth = nextDate.getMonth();
+  renderCalendar(entries);
 };
 
 const render = () => {
@@ -635,6 +656,12 @@ clearData.addEventListener("click", () => {
 authForm.addEventListener("submit", handleAuth);
 authSwitchBtn.addEventListener("click", switchAuthMode);
 logoutBtn.addEventListener("click", handleLogout);
+if (calendarPrev) {
+  calendarPrev.addEventListener("click", () => changeCalendarMonth(-1));
+}
+if (calendarNext) {
+  calendarNext.addEventListener("click", () => changeCalendarMonth(1));
+}
 if (navToggle) {
   navToggle.addEventListener("click", toggleNavMenu);
 }
