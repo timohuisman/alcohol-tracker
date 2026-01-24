@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Alcohol Tracker</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <p class="eyebrow">Alcohol Tracker</p>
+        <h1>Houd je alcoholconsumptie per dag bij</h1>
+        <p class="subtitle">
+          Registreer je drankjes, bekijk totalen en ontdek je patronen.
+        </p>
+      </div>
+      <div class="summary-card" aria-live="polite">
+        <span class="summary-title">Vandaag</span>
+        <span class="summary-value" id="todayTotal">0</span>
+        <span class="summary-unit">standaardglazen</span>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="card">
+        <h2>Nieuwe consumptie</h2>
+        <form id="entryForm" class="entry-form">
+          <label>
+            Datum
+            <input type="date" id="entryDate" required />
+          </label>
+          <label>
+            Drankje
+            <input type="text" id="entryName" placeholder="Bijv. bier, wijn" required />
+          </label>
+          <label>
+            Aantal standaardglazen
+            <input type="number" id="entryUnits" min="1" step="1" value="1" required />
+          </label>
+          <label>
+            Opmerking (optioneel)
+            <textarea id="entryNote" rows="3" placeholder="Bijv. borrel met vrienden"></textarea>
+          </label>
+          <button type="submit">Toevoegen</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <div class="section-header">
+          <h2>Overzicht per dag</h2>
+          <button id="clearData" class="ghost" type="button">Alles wissen</button>
+        </div>
+        <div id="dayList" class="day-list" aria-live="polite"></div>
+      </section>
+
+      <section class="card insights">
+        <h2>Inzichten</h2>
+        <div class="insight-grid">
+          <div>
+            <p class="insight-label">Gemiddeld per dag</p>
+            <p class="insight-value" id="averagePerDay">0</p>
+          </div>
+          <div>
+            <p class="insight-label">Totaal geregistreerd</p>
+            <p class="insight-value" id="totalRecorded">0</p>
+          </div>
+          <div>
+            <p class="insight-label">Meest actieve dag</p>
+            <p class="insight-value" id="topDay">-</p>
+          </div>
+        </div>
+        <p class="helper">
+          Je data wordt lokaal opgeslagen in je browser. Gebruik “Alles wissen” om
+          opnieuw te beginnen.
+        </p>
+      </section>
+    </main>
+
+    <template id="dayTemplate">
+      <article class="day-card">
+        <header>
+          <div>
+            <h3 class="day-title"></h3>
+            <p class="day-total"></p>
+          </div>
+          <button type="button" class="ghost small remove-day">Verwijder dag</button>
+        </header>
+        <ul class="day-entries"></ul>
+      </article>
+    </template>
+
+    <template id="entryTemplate">
+      <li class="entry-row">
+        <div>
+          <p class="entry-name"></p>
+          <p class="entry-note"></p>
+        </div>
+        <div class="entry-meta">
+          <span class="entry-units"></span>
+          <button type="button" class="ghost small remove-entry">Verwijder</button>
+        </div>
+      </li>
+    </template>
+
+    <script src="app.js"></script>
+  </body>
+</html>
