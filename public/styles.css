@@ -437,29 +437,81 @@ button.small {
 
 /* Kleurcodering: grijs/blauw → groen → geel → rood → zwart */
 .calendar-day.color-none {
-  background: #e8eaf0;
+  background: #e5e8f1;
   color: #6c6f87;
-  border-color: #d7d9e6;
+  border-color: #d2d6e3;
 }
 
-.calendar-day.color-low {
-  background: #4ade80;
-  color: #ffffff;
+.calendar-day.color-1 {
+  background: #6ed3a2;
+  color: #0f2a1a;
+  border-color: #50b686;
 }
 
-.calendar-day.color-medium {
-  background: #fbbf24;
-  color: #ffffff;
+.calendar-day.color-2 {
+  background: #5ccc95;
+  color: #0f2a1a;
+  border-color: #44b37f;
 }
 
-.calendar-day.color-high {
-  background: #ef4444;
-  color: #ffffff;
+.calendar-day.color-3 {
+  background: #78c86a;
+  color: #173019;
+  border-color: #5aad50;
 }
 
-.calendar-day.color-very-high {
-  background: #1c1d2a;
-  color: #ffffff;
+.calendar-day.color-4 {
+  background: #a7d163;
+  color: #2a3212;
+  border-color: #86b144;
+}
+
+.calendar-day.color-5 {
+  background: #e2c35a;
+  color: #3a2b0a;
+  border-color: #c3a042;
+}
+
+.calendar-day.color-6 {
+  background: #e8a94e;
+  color: #3b2408;
+  border-color: #cc8836;
+}
+
+.calendar-day.color-7 {
+  background: #e3844a;
+  color: #3b1f0a;
+  border-color: #c96b35;
+}
+
+.calendar-day.color-8 {
+  background: #e0654f;
+  color: #3b140a;
+  border-color: #cc513d;
+}
+
+.calendar-day.color-9 {
+  background: #d85158;
+  color: #3a0f0f;
+  border-color: #c53c42;
+}
+
+.calendar-day.color-10 {
+  background: #bf4764;
+  color: #f8ecef;
+  border-color: #a5364c;
+}
+
+.calendar-day.color-11 {
+  background: #8f3b62;
+  color: #f5eaf0;
+  border-color: #6f2a4d;
+}
+
+.calendar-day.color-12 {
+  background: #3b1e3a;
+  color: #f6ecff;
+  border-color: #221224;
 }
 
 .insights {

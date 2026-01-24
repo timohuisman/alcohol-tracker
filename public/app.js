@@ -106,10 +106,8 @@ const calculateTotal = (entries) =>
 
 const getColorClass = (drinkCount) => {
   if (drinkCount === 0) return "color-none";
-  if (drinkCount <= 2) return "color-low";
-  if (drinkCount <= 5) return "color-medium";
-  if (drinkCount <= 9) return "color-high";
-  return "color-very-high";
+  if (drinkCount >= 12) return "color-12";
+  return `color-${drinkCount}`;
 };
 
 const getDaysInMonth = (year, month) => {
