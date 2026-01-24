@@ -1138,6 +1138,10 @@ const revokeShareLink = async () => {
   if (!supabase) return;
 
   try {
+    const shouldRevoke = window.confirm(
+      "Weet je zeker dat je de deel-link wilt intrekken?",
+    );
+    if (!shouldRevoke) return;
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       showAuthModal();
@@ -1466,7 +1470,12 @@ const render = () => {
         removeEntryButton.style.display = "none";
       } else {
         removeEntryButton.addEventListener("click", () => {
-          deleteEntry(entry.id);
+          const shouldDelete = window.confirm(
+            `Weet je zeker dat je deze entry van ${formatDate(day)} wilt verwijderen?`,
+          );
+          if (shouldDelete) {
+            deleteEntry(entry.id);
+          }
         });
       }
       entriesList.appendChild(entryNode);
