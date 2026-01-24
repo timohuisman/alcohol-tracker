@@ -49,6 +49,7 @@ const yearActiveDays = document.getElementById("yearActiveDays");
 const yearActiveDaysTotal = document.getElementById("yearActiveDaysTotal");
 const yearTopMonth = document.getElementById("yearTopMonth");
 const yearTopDay = document.getElementById("yearTopDay");
+const yearDelta = document.getElementById("yearDelta");
 const monthSelect = document.getElementById("monthSelect");
 const monthYearSelect = document.getElementById("monthYearSelect");
 const monthPrev = document.getElementById("monthPrev");
@@ -685,6 +686,7 @@ const renderYearOverview = (entries) => {
     || !yearActiveDaysTotal
     || !yearTopMonth
     || !yearTopDay
+    || !yearDelta
   ) return;
 
   const grouped = groupByDay(entries);
@@ -703,6 +705,17 @@ const renderYearOverview = (entries) => {
   const activePercentage = daysInSelectedYear
     ? Math.round((activeDays / daysInSelectedYear) * 100)
     : 0;
+  const isCompleteYear = selectedYear < new Date().getFullYear();
+  let prevYearTotal = null;
+  if (isCompleteYear) {
+    const prevDays = Object.keys(grouped).filter((dateStr) =>
+      dateStr.startsWith(`${selectedYear - 1}-`),
+    );
+    const prevEntries = prevDays.flatMap((date) =>
+      (grouped[date] || []).filter((entry) => Number.isFinite(entry.units)),
+    );
+    prevYearTotal = calculateTotal(prevEntries);
+  }
 
   const monthTotals = Array.from({ length: 12 }, () => 0);
   yearEntries.forEach((entry) => {
@@ -722,6 +735,16 @@ const renderYearOverview = (entries) => {
   });
 
   yearTotal.textContent = formatNumber(total || 0);
+  if (!isCompleteYear) {
+    yearDelta.textContent = "";
+  } else if (prevYearTotal === null || prevYearTotal === 0) {
+    yearDelta.textContent = "Geen data vorig jaar";
+  } else {
+    const delta = total - prevYearTotal;
+    const deltaPct = Math.round((delta / prevYearTotal) * 100);
+    const sign = deltaPct > 0 ? "+" : "";
+    yearDelta.textContent = `${sign}${deltaPct}% t.o.v. vorig jaar`;
+  }
   yearAverage.textContent = formatNumber(average || 0);
   yearActiveDays.innerHTML = `${formatNumber(activeDays || 0)} / <span class="insight-subtle">${formatNumber(daysInSelectedYear)}</span>`;
   yearActiveDaysTotal.textContent = `${activePercentage}% van het jaar`;
