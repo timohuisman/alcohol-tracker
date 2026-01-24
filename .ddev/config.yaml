@@ -1,0 +1,12 @@
+name: alcohol-tracker
+type: php
+php_version: "8.2"
+webserver_type: nginx-fpm
+docroot: public
+router_http_port: ""
+router_https_port: ""
+use_dns_when_possible: true
+xdebug_enabled: false
+additional_hostnames: []
+additional_fqdns: []
+mariadb_version: "10.11"
