@@ -15,8 +15,8 @@ const topDay = document.getElementById("topDay");
 const clearData = document.getElementById("clearData");
 
 const formatNumber = (value) => value.toLocaleString("nl-NL", {
-  minimumFractionDigits: value % 1 === 0 ? 0 : 1,
-  maximumFractionDigits: 1,
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
 });
 
 const parseStorage = () => {
@@ -142,7 +142,7 @@ entryForm.addEventListener("submit", (event) => {
     id: crypto.randomUUID(),
     date: entryDate.value,
     name: entryName.value.trim(),
-    units: Number.parseFloat(entryUnits.value),
+    units: Number.parseInt(entryUnits.value, 10),
     note: entryNote.value.trim(),
   };
 
