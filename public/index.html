@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Alcohol Tracker</title>
     <link rel="stylesheet" href="styles.css" />
+    <!-- Supabase client library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
   <body>
     <!-- Authenticatie modal -->
@@ -76,14 +78,6 @@
         </form>
       </section>
 
-      <section class="card">
-        <div class="section-header">
-          <h2>Overzicht per dag</h2>
-          <button id="clearData" class="ghost" type="button">Alles wissen</button>
-        </div>
-        <div id="dayList" class="day-list" aria-live="polite"></div>
-      </section>
-
       <section class="card insights">
         <h2>Inzichten</h2>
         <div class="insight-grid">
@@ -101,8 +95,7 @@
           </div>
         </div>
         <p class="helper">
-          Je data wordt lokaal opgeslagen in je browser. Gebruik “Alles wissen” om
-          opnieuw te beginnen.
+          Je data wordt opgeslagen in de cloud en gesynchroniseerd tussen al je apparaten.
         </p>
       </section>
 
@@ -111,6 +104,13 @@
         <div id="calendarContainer" class="calendar-container" aria-live="polite"></div>
       </section>
 
+      <section class="card">
+        <div class="section-header">
+          <h2>Overzicht per dag</h2>
+          <button id="clearData" class="ghost" type="button">Alles wissen</button>
+        </div>
+        <div id="dayList" class="day-list" aria-live="polite"></div>
+      </section>
     </main>
 
     <template id="dayTemplate">
@@ -139,6 +139,7 @@
       </li>
     </template>
 
+    <script src="supabase-config.local.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

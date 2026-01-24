@@ -13,6 +13,10 @@ if (typeof SUPABASE_URL !== 'undefined' && SUPABASE_URL !== 'YOUR_SUPABASE_URL' 
     typeof SUPABASE_ANON_KEY !== 'undefined' && SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY') {
   supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 } else {
+  console.error('Supabase is niet geconfigureerd. Vul supabase-config.local.js in met je credentials.');
+}
+
+// DOM elementen
 const entryForm = document.getElementById("entryForm");
 const entryDate = document.getElementById("entryDate");
 const entryName = document.getElementById("entryName");
@@ -26,6 +30,10 @@ const averagePerDay = document.getElementById("averagePerDay");
 const totalRecorded = document.getElementById("totalRecorded");
 const topDay = document.getElementById("topDay");
 const clearData = document.getElementById("clearData");
+const calendarContainer = document.getElementById("calendarContainer");
+
+// Authenticatie elementen
+const authModal = document.getElementById("authModal");
 const authForm = document.getElementById("authForm");
 const authEmail = document.getElementById("authEmail");
 const authPassword = document.getElementById("authPassword");
@@ -36,28 +44,16 @@ const userInfo = document.getElementById("userInfo");
 const userEmail = document.getElementById("userEmail");
 const logoutBtn = document.getElementById("logoutBtn");
 
+// State
+let isSignUp = false;
+let entries = [];
+let realtimeSubscription = null;
+
+// Utility functies
 const formatNumber = (value) => value.toLocaleString("nl-NL", {
   minimumFractionDigits: 0,
   maximumFractionDigits: 0,
 });
-
-const parseStorage = () => {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) {
-    return [];
-  }
-  try {
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (error) {
-    console.warn("Kan opgeslagen data niet lezen", error);
-    return [];
-  }
-};
-
-const saveStorage = (entries) => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
-};
 
 const groupByDay = (entries) => {
   return entries.reduce((acc, entry) => {
@@ -226,6 +222,161 @@ const switchAuthMode = () => {
 };
 
 // Supabase data functies
+const loadEntries = async () => {
+  if (!supabase) return;
+
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+
+    const { data, error } = await supabase
+      .from('entries')
+      .select('*')
+      .order('date', { ascending: false })
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    entries = data || [];
+    render();
+  } catch (error) {
+    console.error('Fout bij laden entries:', error);
+    showAuthError('Kon gegevens niet laden: ' + error.message);
+  }
+};
+
+const addEntry = async (entry) => {
+  if (!supabase) return;
+
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      showAuthModal();
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from('entries')
+      .insert([{
+        user_id: session.user.id,
+        date: entry.date,
+        name: entry.name,
+        units: entry.units,
+        note: entry.note || null,
+      }])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Entry wordt automatisch toegevoegd via realtime subscription
+    // Maar we kunnen het ook direct toevoegen voor snellere feedback
+    entries.unshift(data);
+    render();
+  } catch (error) {
+    console.error('Fout bij toevoegen entry:', error);
+    showAuthError('Kon entry niet toevoegen: ' + error.message);
+  }
+};
+
+const deleteEntry = async (entryId) => {
+  if (!supabase) return;
+
+  try {
+    const { error } = await supabase
+      .from('entries')
+      .delete()
+      .eq('id', entryId);
+
+    if (error) throw error;
+
+    // Entry wordt automatisch verwijderd via realtime subscription
+    entries = entries.filter(e => e.id !== entryId);
+    render();
+  } catch (error) {
+    console.error('Fout bij verwijderen entry:', error);
+    showAuthError('Kon entry niet verwijderen: ' + error.message);
+  }
+};
+
+const deleteDayEntries = async (date) => {
+  if (!supabase) return;
+
+  try {
+    const { error } = await supabase
+      .from('entries')
+      .delete()
+      .eq('date', date);
+
+    if (error) throw error;
+
+    // Entries worden automatisch verwijderd via realtime subscription
+    entries = entries.filter(e => e.date !== date);
+    render();
+  } catch (error) {
+    console.error('Fout bij verwijderen dag:', error);
+    showAuthError('Kon dag niet verwijderen: ' + error.message);
+  }
+};
+
+const clearAllEntries = async () => {
+  if (!supabase) return;
+
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+
+    const { error } = await supabase
+      .from('entries')
+      .delete()
+      .eq('user_id', session.user.id);
+
+    if (error) throw error;
+
+    entries = [];
+    render();
+  } catch (error) {
+    console.error('Fout bij wissen alle entries:', error);
+    showAuthError('Kon gegevens niet wissen: ' + error.message);
+  }
+};
+
+// Real-time synchronisatie
+const setupRealtime = async () => {
+  if (!supabase || realtimeSubscription) return;
+
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return;
+
+  realtimeSubscription = supabase
+    .channel('entries-changes')
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'entries',
+        filter: `user_id=eq.${session.user.id}`,
+      },
+      (payload) => {
+        if (payload.eventType === 'INSERT') {
+          entries.unshift(payload.new);
+          render();
+        } else if (payload.eventType === 'UPDATE') {
+          const index = entries.findIndex(e => e.id === payload.new.id);
+          if (index !== -1) {
+            entries[index] = payload.new;
+            render();
+          }
+        } else if (payload.eventType === 'DELETE') {
+          entries = entries.filter(e => e.id !== payload.old.id);
+          render();
+        }
+      }
+    )
+    .subscribe();
+};
+
 // Render functies
 const renderCalendar = (entries) => {
   const grouped = groupByDay(entries);
@@ -323,7 +474,6 @@ const renderCalendar = (entries) => {
 };
 
 const render = () => {
-  const entries = parseStorage();
   const grouped = groupByDay(entries);
   const days = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
 
@@ -342,9 +492,12 @@ const render = () => {
     dayTotal.textContent = `${formatNumber(totalForDay)} standaardglazen`;
 
     removeDayButton.addEventListener("click", () => {
-      const filtered = entries.filter((entry) => entry.date !== day);
-      saveStorage(filtered);
-      render();
+      const shouldDelete = window.confirm(
+        `Weet je zeker dat je alle entries van ${formatDate(day)} wilt verwijderen?`
+      );
+      if (shouldDelete) {
+        deleteDayEntries(day);
+      }
     });
 
     dayEntries.forEach((entry) => {
@@ -357,9 +510,7 @@ const render = () => {
         ".entry-units",
       ).textContent = `${formatNumber(entry.units)} glazen`;
       entryNode.querySelector(".remove-entry").addEventListener("click", () => {
-        const filtered = entries.filter((item) => item.id !== entry.id);
-        saveStorage(filtered);
-        render();
+        deleteEntry(entry.id);
       });
       entriesList.appendChild(entryNode);
     });
@@ -398,23 +549,26 @@ const updateInsights = (entries) => {
   )})`;
 };
 
-entryForm.addEventListener("submit", (event) => {
+// Event listeners
+entryForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  const entries = parseStorage();
+  
+  if (!supabase) {
+    showAuthModal();
+    return;
+  }
+
   const newEntry = {
-    id: crypto.randomUUID(),
     date: entryDate.value,
     name: entryName.value.trim(),
     units: Number.parseInt(entryUnits.value, 10),
     note: entryNote.value.trim(),
   };
 
-  entries.push(newEntry);
-  saveStorage(entries);
+  await addEntry(newEntry);
   entryForm.reset();
   entryUnits.value = "1";
   entryDate.value = new Date().toISOString().slice(0, 10);
-  render();
 });
 
 clearData.addEventListener("click", () => {
@@ -422,10 +576,37 @@ clearData.addEventListener("click", () => {
     "Weet je zeker dat je alle gegevens wilt verwijderen?",
   );
   if (shouldClear) {
-    saveStorage([]);
-    render();
+    clearAllEntries();
   }
 });
 
+authForm.addEventListener("submit", handleAuth);
+authSwitchBtn.addEventListener("click", switchAuthMode);
+logoutBtn.addEventListener("click", handleLogout);
+
+// Auth state listener
+if (supabase) {
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_IN') {
+      checkAuth();
+    } else if (event === 'SIGNED_OUT') {
+      if (realtimeSubscription) {
+        supabase.removeChannel(realtimeSubscription);
+        realtimeSubscription = null;
+      }
+      entries = [];
+      render();
+      checkAuth();
+    }
+  });
+}
+
+// Initialisatie
 entryDate.value = new Date().toISOString().slice(0, 10);
-render();
+
+if (supabase) {
+  checkAuth();
+} else {
+  showAuthModal();
+}
+})();
