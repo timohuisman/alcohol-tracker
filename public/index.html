@@ -80,10 +80,16 @@
           Registreer je drankjes, bekijk totalen en ontdek je patronen.
         </p>
       </div>
-      <div class="summary-card" aria-live="polite">
+      <div class="summary-card" id="todayCard" aria-live="polite" role="button" tabindex="0">
         <span class="summary-title">Vandaag</span>
         <span class="summary-value" id="todayTotal">0</span>
         <span class="summary-unit">standaardglazen</span>
+        <span class="summary-hint">
+          <svg class="summary-hint-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M12 5.5a.75.75 0 0 1 .75.75v4.5h4.5a.75.75 0 0 1 0 1.5h-4.5v4.5a.75.75 0 0 1-1.5 0v-4.5h-4.5a.75.75 0 0 1 0-1.5h4.5v-4.5a.75.75 0 0 1 .75-.75z"></path>
+          </svg>
+          Klik om toe te voegen
+        </span>
       </div>
     </header>
 
@@ -91,28 +97,33 @@
       <div id="shareBanner" class="share-banner" style="display: none;">
         Je bekijkt een gedeelde, alleen-lezen weergave.
       </div>
-      <section class="card">
-        <h2>Nieuwe consumptie</h2>
-        <form id="entryForm" class="entry-form">
-          <label>
-            Datum
-            <input type="date" id="entryDate" required />
-          </label>
-          <label>
-            Drankje
-            <input type="text" id="entryName" placeholder="Bijv. bier, wijn" value="Bier" required />
-          </label>
-          <label>
-            Aantal standaardglazen
-            <input type="number" id="entryUnits" min="1" step="1" value="1" required />
-          </label>
-          <label>
-            Opmerking (optioneel)
-            <textarea id="entryNote" rows="3" placeholder="Bijv. borrel met vrienden"></textarea>
-          </label>
-          <button type="submit">Toevoegen</button>
-        </form>
-      </section>
+      <div id="entryModal" class="entry-modal" style="display: none;">
+        <div class="entry-modal-content">
+          <div class="section-header">
+            <h2>Nieuwe consumptie</h2>
+            <button id="entryModalClose" class="ghost small" type="button" aria-label="Sluiten">Sluiten</button>
+          </div>
+          <form id="entryForm" class="entry-form">
+            <label>
+              Datum
+              <input type="date" id="entryDate" required />
+            </label>
+            <label>
+              Drankje
+              <input type="text" id="entryName" placeholder="Bijv. bier, wijn" value="Bier" required />
+            </label>
+            <label>
+              Aantal standaardglazen
+              <input type="number" id="entryUnits" min="1" step="1" value="1" required />
+            </label>
+            <label>
+              Opmerking (optioneel)
+              <textarea id="entryNote" rows="3" placeholder="Bijv. borrel met vrienden"></textarea>
+            </label>
+            <button type="submit">Toevoegen</button>
+          </form>
+        </div>
+      </div>
 
       <section class="card insights">
         <h2>Inzichten</h2>

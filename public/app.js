@@ -22,6 +22,9 @@ const entryDate = document.getElementById("entryDate");
 const entryName = document.getElementById("entryName");
 const entryUnits = document.getElementById("entryUnits");
 const entryNote = document.getElementById("entryNote");
+const entryModal = document.getElementById("entryModal");
+const entryModalClose = document.getElementById("entryModalClose");
+const todayCard = document.getElementById("todayCard");
 const dayList = document.getElementById("dayList");
 const dayTemplate = document.getElementById("dayTemplate");
 const entryTemplate = document.getElementById("entryTemplate");
@@ -881,10 +884,7 @@ const setReadOnlyUI = () => {
   document.body.classList.add("read-only");
   if (shareBanner) shareBanner.style.display = "block";
   if (authModal) authModal.style.display = "none";
-  if (entryForm) {
-    const entryCard = entryForm.closest(".card");
-    if (entryCard) entryCard.style.display = "none";
-  }
+  if (entryModal) entryModal.style.display = "none";
   if (quickAddBtn) quickAddBtn.style.display = "none";
   if (clearData) clearData.style.display = "none";
 };
@@ -894,6 +894,17 @@ const showShareLink = (token) => {
   if (shareLinkStatus) shareLinkStatus.style.display = "none";
   shareLinkInput.value = buildShareUrl(token);
   shareLinkWrap.style.display = "grid";
+};
+
+const openEntryModal = () => {
+  if (isShareMode || !entryModal) return;
+  entryModal.style.display = "flex";
+  if (entryName) entryName.focus();
+};
+
+const closeEntryModal = () => {
+  if (!entryModal) return;
+  entryModal.style.display = "none";
 };
 
 const generateShareToken = () => {
@@ -1554,6 +1565,7 @@ entryForm.addEventListener("submit", async (event) => {
   entryName.value = defaultDrinkName;
   entryUnits.value = "1";
   entryDate.value = getLocalDateString();
+  closeEntryModal();
 });
 
 clearData.addEventListener("click", () => {
@@ -1569,6 +1581,25 @@ clearData.addEventListener("click", () => {
 authForm.addEventListener("submit", handleAuth);
 authSwitchBtn.addEventListener("click", switchAuthMode);
 logoutBtn.addEventListener("click", handleLogout);
+if (todayCard) {
+  todayCard.addEventListener("click", openEntryModal);
+  todayCard.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      openEntryModal();
+    }
+  });
+}
+if (entryModalClose) {
+  entryModalClose.addEventListener("click", closeEntryModal);
+}
+if (entryModal) {
+  entryModal.addEventListener("click", (event) => {
+    if (event.target === entryModal) {
+      closeEntryModal();
+    }
+  });
+}
 if (shareLinkBtn) {
   shareLinkBtn.addEventListener("click", createShareLink);
 }
@@ -1688,13 +1719,7 @@ if (navToggle) {
 if (quickAddBtn) {
   quickAddBtn.addEventListener("click", async () => {
     if (isShareMode) return;
-    const today = getLocalDateString();
-    await addEntry({
-      date: today,
-      name: defaultDrinkName,
-      units: 1,
-      note: "",
-    });
+    openEntryModal();
   });
 }
 
@@ -1719,6 +1744,7 @@ if (supabase && !isShareMode) {
 entryDate.value = getLocalDateString();
 entryName.value = defaultDrinkName;
 applyDrinkCountStyling();
+closeEntryModal();
 
 if (isShareMode) {
   setReadOnlyUI();
