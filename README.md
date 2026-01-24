@@ -79,6 +79,8 @@ De app bevat een PWA manifest en service worker. Na deployment kun je op je tele
 de app installeren op je homescreen (bijv. “Add to Home Screen”).
 
 Let op: service workers werken alleen via `http://localhost` of `https://` (niet via `file://`).
+Bij GitHub Pages moet het `start_url` en de `scope` in `public/manifest.webmanifest` overeenkomen met
+de repo‑naam, bijvoorbeeld `/alcohol-tracker/`. Pas dit aan als je repo‑naam anders is.
 
 ### 5. Deployen (overige)
 

@@ -1,15 +1,18 @@
 const CACHE_VERSION = "v1";
 const STATIC_CACHE = `alcohol-tracker-static-${CACHE_VERSION}`;
+const BASE_URL = self.registration.scope;
+
+const toBaseUrl = (path) => new URL(path, BASE_URL).toString();
 
 const STATIC_ASSETS = [
-  "./",
-  "./index.html",
-  "./styles.css",
-  "./app.js",
-  "./supabase-config.js",
-  "./manifest.webmanifest",
-  "./icons/icon.svg",
-  "./icons/icon-maskable.svg",
+  toBaseUrl("./"),
+  toBaseUrl("./index.html"),
+  toBaseUrl("./styles.css"),
+  toBaseUrl("./app.js"),
+  toBaseUrl("./supabase-config.js"),
+  toBaseUrl("./manifest.webmanifest"),
+  toBaseUrl("./icons/icon.svg"),
+  toBaseUrl("./icons/icon-maskable.svg"),
 ];
 
 self.addEventListener("install", (event) => {
@@ -50,7 +53,7 @@ self.addEventListener("fetch", (event) => {
           caches.open(STATIC_CACHE).then((cache) => cache.put(request, responseClone));
           return response;
         })
-        .catch(() => caches.match("./index.html"))
+        .catch(() => caches.match(toBaseUrl("./index.html")))
     );
     return;
   }
