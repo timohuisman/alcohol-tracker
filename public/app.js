@@ -124,6 +124,10 @@ const formatMonthYear = (year, month) => {
   });
 };
 
+const formatDateString = (year, month, day) => {
+  return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+};
+
 // Authenticatie functies
 const showAuthError = (message) => {
   authError.textContent = message;
@@ -437,21 +441,39 @@ const renderCalendar = (entries) => {
 
   const daysInMonth = getDaysInMonth(currentYear, currentMonth);
   const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
-  const today = new Date();
-  const todayDate = today.getDate();
-  const todayMonth = today.getMonth();
-  const todayYear = today.getFullYear();
-  const isCurrentMonth = currentYear === todayYear && currentMonth === todayMonth;
+  const prevMonthDate = new Date(currentYear, currentMonth - 1, 1);
+  const nextMonthDate = new Date(currentYear, currentMonth + 1, 1);
+  const daysInPrevMonth = getDaysInMonth(prevMonthDate.getFullYear(), prevMonthDate.getMonth());
 
   const allDays = [];
 
   for (let i = 0; i < firstDay; i++) {
-    allDays.push(null);
+    const day = daysInPrevMonth - firstDay + 1 + i;
+    allDays.push({
+      year: prevMonthDate.getFullYear(),
+      month: prevMonthDate.getMonth(),
+      day,
+      inCurrentMonth: false,
+    });
   }
 
-  const lastDayToShow = isCurrentMonth ? todayDate : daysInMonth;
-  for (let day = 1; day <= lastDayToShow; day++) {
-    allDays.push(day);
+  for (let day = 1; day <= daysInMonth; day++) {
+    allDays.push({
+      year: currentYear,
+      month: currentMonth,
+      day,
+      inCurrentMonth: true,
+    });
+  }
+
+  const trailingDays = (7 - (allDays.length % 7)) % 7;
+  for (let i = 1; i <= trailingDays; i++) {
+    allDays.push({
+      year: nextMonthDate.getFullYear(),
+      month: nextMonthDate.getMonth(),
+      day: i,
+      inCurrentMonth: false,
+    });
   }
 
   const weeks = [];
@@ -462,37 +484,31 @@ const renderCalendar = (entries) => {
     }
   }
 
-  weeks.reverse().forEach((week) => {
-    week.forEach((day) => {
-      if (day === null) {
-        const emptyDay = document.createElement("div");
-        emptyDay.className = "calendar-day empty";
-        grid.appendChild(emptyDay);
-      } else {
-        const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-        const dayEntries = grouped[dateStr] || [];
-        const drinkCount = calculateTotal(dayEntries);
-        const colorClass = getColorClass(drinkCount);
+  weeks.forEach((week) => {
+    week.forEach((dayInfo) => {
+      const dateStr = formatDateString(dayInfo.year, dayInfo.month, dayInfo.day);
+      const dayEntries = grouped[dateStr] || [];
+      const drinkCount = calculateTotal(dayEntries);
+      const colorClass = getColorClass(drinkCount);
 
-        const dayElement = document.createElement("div");
-        dayElement.className = `calendar-day ${colorClass}`;
-        dayElement.setAttribute("data-date", dateStr);
-        dayElement.setAttribute("title", `${dateStr}: ${formatNumber(drinkCount)} standaardglazen`);
+      const dayElement = document.createElement("div");
+      dayElement.className = `calendar-day ${colorClass} ${dayInfo.inCurrentMonth ? "" : "out-month"}`.trim();
+      dayElement.setAttribute("data-date", dateStr);
+      dayElement.setAttribute("title", `${dateStr}: ${formatNumber(drinkCount)} standaardglazen`);
 
-        const dayNumber = document.createElement("div");
-        dayNumber.className = "calendar-day-number";
-        dayNumber.textContent = day;
-        dayElement.appendChild(dayNumber);
+      const dayNumber = document.createElement("div");
+      dayNumber.className = "calendar-day-number";
+      dayNumber.textContent = dayInfo.day;
+      dayElement.appendChild(dayNumber);
 
-        if (drinkCount > 0) {
-          const dayCount = document.createElement("div");
-          dayCount.className = "calendar-day-count";
-          dayCount.textContent = `${formatNumber(drinkCount)}`;
-          dayElement.appendChild(dayCount);
-        }
-
-        grid.appendChild(dayElement);
+      if (drinkCount > 0) {
+        const dayCount = document.createElement("div");
+        dayCount.className = "calendar-day-count";
+        dayCount.textContent = `${formatNumber(drinkCount)}`;
+        dayElement.appendChild(dayCount);
       }
+
+      grid.appendChild(dayElement);
     });
   });
 

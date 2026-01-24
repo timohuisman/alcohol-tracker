@@ -416,6 +416,11 @@ button.small {
   box-shadow: none;
 }
 
+.calendar-day.out-month {
+  opacity: 0.35;
+  filter: grayscale(0.2);
+}
+
 /* Kleurcodering: grijs/blauw → groen → geel → rood → zwart */
 .calendar-day.color-none {
   background: #e8eaf0;
