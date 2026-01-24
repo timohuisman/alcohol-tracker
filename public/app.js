@@ -1457,8 +1457,17 @@ const render = () => {
         ? entry.note
         : "Geen opmerking";
       const timeNode = entryNode.querySelector(".entry-time");
-      if (day === today && entry.created_at) {
-        timeNode.textContent = formatTime(entry.created_at);
+      const cutoffDate = "2026-01-25";
+      const shouldShowTime = entry.created_at && (!entry.date || entry.date >= cutoffDate);
+      if (shouldShowTime) {
+        const formattedTime = formatTime(entry.created_at);
+        if (formattedTime) {
+          timeNode.textContent = formattedTime;
+          timeNode.style.display = "";
+        } else {
+          timeNode.textContent = "";
+          timeNode.style.display = "none";
+        }
       } else {
         timeNode.textContent = "";
         timeNode.style.display = "none";
