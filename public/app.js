@@ -50,6 +50,7 @@ const yearActiveDaysTotal = document.getElementById("yearActiveDaysTotal");
 const yearTopMonth = document.getElementById("yearTopMonth");
 const yearTopDay = document.getElementById("yearTopDay");
 const yearDelta = document.getElementById("yearDelta");
+const yearHeatmap = document.getElementById("yearHeatmap");
 const monthSelect = document.getElementById("monthSelect");
 const monthYearSelect = document.getElementById("monthYearSelect");
 const monthPrev = document.getElementById("monthPrev");
@@ -687,6 +688,7 @@ const renderYearOverview = (entries) => {
     || !yearTopMonth
     || !yearTopDay
     || !yearDelta
+    || !yearHeatmap
   ) return;
 
   const grouped = groupByDay(entries);
@@ -762,6 +764,56 @@ const renderYearOverview = (entries) => {
   } else {
     yearTopDay.textContent = "-";
   }
+
+  yearHeatmap.innerHTML = "";
+  const maxMonth = Math.max(1, ...monthTotals);
+  monthTotals.forEach((value, index) => {
+    const cell = document.createElement("div");
+    cell.className = "year-heatmap-cell";
+    cell.setAttribute("role", "button");
+    cell.setAttribute("tabindex", "0");
+    const intensity = value ? Math.min(0.85, 0.15 + (value / maxMonth) * 0.7) : 0;
+    cell.style.background = value
+      ? `rgba(54, 56, 244, ${intensity})`
+      : "#eef0f8";
+    cell.style.borderColor = value ? "rgba(54, 56, 244, 0.2)" : "#e2e4f6";
+    cell.style.color = value ? "#ffffff" : "#1c1d2a";
+
+    const monthLabel = document.createElement("div");
+    monthLabel.className = "year-heatmap-month";
+    monthLabel.textContent = formatMonthOptionLabel(index);
+    if (value) monthLabel.style.color = "rgba(255, 255, 255, 0.8)";
+
+    const monthValue = document.createElement("div");
+    monthValue.className = "year-heatmap-value";
+    monthValue.textContent = `${formatNumber(value)} glazen`;
+    if (value) monthValue.style.color = "#ffffff";
+
+    cell.appendChild(monthLabel);
+    cell.appendChild(monthValue);
+    yearHeatmap.appendChild(cell);
+
+    const jumpToMonth = () => {
+      selectedMonthYear = selectedYear;
+      selectedMonth = index;
+      const availableYears = getAvailableYears(entries);
+      updateMonthControls(availableYears);
+      renderMonthOverview(entries);
+      yearHeatmap.querySelectorAll(".year-heatmap-cell").forEach((node) => {
+        node.classList.remove("selected");
+      });
+      cell.classList.add("selected");
+      window.setTimeout(() => cell.classList.remove("selected"), 600);
+    };
+
+    cell.addEventListener("click", jumpToMonth);
+    cell.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        jumpToMonth();
+      }
+    });
+  });
 };
 
 const renderMonthOverview = (entries) => {

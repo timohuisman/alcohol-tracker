@@ -421,6 +421,51 @@ button.small {
   margin-top: 12px;
 }
 
+.year-heatmap {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.year-heatmap-cell {
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #eef0f8;
+  border: 1px solid #e2e4f6;
+  display: grid;
+  gap: 6px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.year-heatmap-cell:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 18px rgba(24, 32, 64, 0.12);
+}
+
+.year-heatmap-cell:focus-visible {
+  outline: 2px solid #3638f4;
+  outline-offset: 3px;
+}
+
+.year-heatmap-cell.selected {
+  box-shadow: 0 0 0 2px rgba(54, 56, 244, 0.35);
+}
+
+.year-heatmap-month {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6c6f87;
+}
+
+.year-heatmap-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1c1d2a;
+}
+
 .month-section {
   width: 100%;
 }
