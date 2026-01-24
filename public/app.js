@@ -1753,33 +1753,41 @@ const updateInsights = (entries) => {
 };
 
 // Event listeners
-entryForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  if (isShareMode) return;
-  
-  if (!supabase) {
-    showAuthModal();
-    return;
-  }
+if (entryForm) {
+  entryForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (isShareMode) return;
+    
+    if (!supabase) {
+      showAuthModal();
+      return;
+    }
 
-  const newEntry = {
-    date: entryDate.value,
-    name: entryName.value.trim(),
-    units: Number.parseInt(entryUnits.value, 10),
-    note: entryNote.value.trim(),
-  };
+    const newEntry = {
+      date: entryDate.value,
+      name: entryName.value.trim(),
+      units: Number.parseInt(entryUnits.value, 10),
+      note: entryNote.value.trim(),
+    };
 
-  await addEntry(newEntry);
-  entryForm.reset();
-  entryName.value = defaultDrinkName;
-  entryUnits.value = "1";
-  entryDate.value = getLocalDateString();
-  closeEntryModal();
-});
+    await addEntry(newEntry);
+    entryForm.reset();
+    entryName.value = defaultDrinkName;
+    entryUnits.value = "1";
+    entryDate.value = getLocalDateString();
+    closeEntryModal();
+  });
+}
 
-authForm.addEventListener("submit", handleAuth);
-authSwitchBtn.addEventListener("click", switchAuthMode);
-logoutBtn.addEventListener("click", handleLogout);
+if (authForm) {
+  authForm.addEventListener("submit", handleAuth);
+}
+if (authSwitchBtn) {
+  authSwitchBtn.addEventListener("click", switchAuthMode);
+}
+if (logoutBtn) {
+  logoutBtn.addEventListener("click", handleLogout);
+}
 if (todayCard) {
   todayCard.addEventListener("click", openEntryModal);
   todayCard.addEventListener("keydown", (event) => {

@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v1";
+const CACHE_VERSION = "v2";
 const STATIC_CACHE = `alcohol-tracker-static-${CACHE_VERSION}`;
 const BASE_URL = self.registration.scope;
 
