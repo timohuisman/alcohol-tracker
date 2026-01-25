@@ -332,11 +332,19 @@
           });
 
         const loadConfig = async () => {
-          try {
-            await loadScript("supabase-config.local.js");
-          } catch (error) {
-            await loadScript("supabase-config.js");
+          const isLocal =
+            location.hostname === "localhost" || location.hostname === "127.0.0.1";
+
+          if (isLocal) {
+            try {
+              await loadScript("./supabase-config.local.js");
+              return;
+            } catch (error) {
+              // Valt terug op productieconfig
+            }
           }
+
+          await loadScript("./supabase-config.js");
         };
 
         loadConfig()
