@@ -11,6 +11,10 @@
   box-sizing: border-box;
 }
 
+html {
+  overflow-x: clip;
+}
+
 body {
   margin: 0;
   padding: var(--page-padding) var(--page-padding) 64px;
@@ -222,6 +226,9 @@ p {
 .layout {
   column-gap: 24px;
   column-count: 1;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .card {
