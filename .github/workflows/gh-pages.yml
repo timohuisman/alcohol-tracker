@@ -27,6 +27,20 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      - name: Generate Supabase config
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "Missing SUPABASE_URL or SUPABASE_ANON_KEY secrets."
+            exit 1
+          fi
+          cat > public/supabase-config.js <<EOF
+          const SUPABASE_URL = "${SUPABASE_URL}";
+          const SUPABASE_ANON_KEY = "${SUPABASE_ANON_KEY}";
+          EOF
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
