@@ -1926,7 +1926,13 @@ if (navToggle) {
 if (quickAddBtn) {
   quickAddBtn.addEventListener("click", async () => {
     if (isShareMode) return;
-    openEntryModal();
+    const today = getLocalDateString();
+    await addEntry({
+      date: today,
+      name: defaultDrinkName,
+      units: 1,
+      note: "",
+    });
   });
 }
 
