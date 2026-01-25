@@ -492,6 +492,15 @@ button.small {
   width: 100%;
 }
 
+.trend-section[role="button"] {
+  cursor: pointer;
+}
+
+.trend-section[role="button"]:focus-visible {
+  outline: 2px solid #3638f4;
+  outline-offset: 4px;
+}
+
 .trend-section .section-header {
   align-items: flex-start;
 }
@@ -528,6 +537,11 @@ button.small {
   height: 12px;
   border-radius: 999px;
   background: currentColor;
+}
+
+.trend-legend-swatch.estimate {
+  background: transparent;
+  border: 2px dashed currentColor;
 }
 
 .microtrend-section {

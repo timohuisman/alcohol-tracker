@@ -65,6 +65,9 @@ const monthDelta = document.getElementById("monthDelta");
 const monthDeltaSub = document.getElementById("monthDeltaSub");
 const trendChart = document.getElementById("trendChart");
 const trendLegend = document.getElementById("trendLegend");
+const trendMonthChart = document.getElementById("trendMonthChart");
+const trendMonthLegend = document.getElementById("trendMonthLegend");
+const trendSection = document.getElementById("trendSection");
 const distributionChart = document.getElementById("distributionChart");
 const distributionYearSelect = document.getElementById("distributionYearSelect");
 const microtrendChart = document.getElementById("microtrendChart");
@@ -106,6 +109,7 @@ let selectedYear = new Date().getFullYear();
 let selectedMonth = new Date().getMonth();
 let selectedMonthYear = new Date().getFullYear();
 let selectedDistributionYear = "all";
+let trendView = "year";
 
 // Utility functies
 const formatNumber = (value) => value.toLocaleString("nl-NL", {
@@ -909,6 +913,35 @@ const renderMonthOverview = (entries) => {
   }
 };
 
+const renderTrendLegend = (container, years, colors, showEstimate) => {
+  if (!container) return;
+  container.innerHTML = "";
+  years.forEach((year, index) => {
+    const legendItem = document.createElement("div");
+    legendItem.className = "trend-legend-item";
+    legendItem.style.color = colors[index] || "#b5b9cc";
+    const swatch = document.createElement("span");
+    swatch.className = "trend-legend-swatch";
+    const label = document.createElement("span");
+    label.textContent = String(year);
+    legendItem.appendChild(swatch);
+    legendItem.appendChild(label);
+    container.appendChild(legendItem);
+  });
+  if (showEstimate) {
+    const legendItem = document.createElement("div");
+    legendItem.className = "trend-legend-item";
+    legendItem.style.color = "#3638f4";
+    const swatch = document.createElement("span");
+    swatch.className = "trend-legend-swatch estimate";
+    const label = document.createElement("span");
+    label.textContent = "Schatting";
+    legendItem.appendChild(swatch);
+    legendItem.appendChild(label);
+    container.appendChild(legendItem);
+  }
+};
+
 const renderTrendChart = (entries) => {
   if (!trendChart || !trendLegend) return;
 
@@ -985,6 +1018,7 @@ const renderTrendChart = (entries) => {
   }
 
   const colors = ["#3638f4", "#6c6f87", "#b5b9cc"];
+  const showEstimate = primaryYear === now.getFullYear() && compareYears.length > 0;
 
   lines.forEach((line, index) => {
     if (!line.cumulative.length) return;
@@ -1059,17 +1093,8 @@ const renderTrendChart = (entries) => {
     path.setAttribute("stroke-linejoin", "round");
     trendChart.appendChild(path);
 
-    const legendItem = document.createElement("div");
-    legendItem.className = "trend-legend-item";
-    legendItem.style.color = colors[index] || "#b5b9cc";
-    const swatch = document.createElement("span");
-    swatch.className = "trend-legend-swatch";
-    const label = document.createElement("span");
-    label.textContent = String(line.year);
-    legendItem.appendChild(swatch);
-    legendItem.appendChild(label);
-    trendLegend.appendChild(legendItem);
   });
+  renderTrendLegend(trendLegend, years, colors, showEstimate);
 
   if (!lines.some((line) => line.cumulative.some((value) => value > 0))) {
     const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
@@ -1080,6 +1105,158 @@ const renderTrendChart = (entries) => {
     text.textContent = "Nog geen data om te tonen.";
     trendChart.appendChild(text);
   }
+};
+
+const renderMonthTrend = (entries) => {
+  if (!trendMonthChart || !trendMonthLegend) return;
+  trendMonthChart.innerHTML = "";
+  trendMonthLegend.innerHTML = "";
+
+  const availableYears = getAvailableYears(entries);
+  const primaryYear = selectedYear;
+  const compareYears = [primaryYear - 1, primaryYear - 2].filter((year) =>
+    availableYears.includes(year),
+  );
+  const years = [primaryYear, ...compareYears];
+
+  const now = new Date();
+  const referenceDate = new Date(primaryYear, now.getMonth(), now.getDate());
+  const startOfYear = new Date(primaryYear, 0, 1);
+  const endOfYear = new Date(primaryYear, 11, 31);
+  const start = addDays(referenceDate, -45);
+  const end = addDays(referenceDate, 45);
+  const windowStart = start < startOfYear ? startOfYear : start;
+  const windowEnd = end > endOfYear ? endOfYear : end;
+  const rangeStartDay = getDayOfYear(getISODate(windowStart));
+  const rangeEndDay = getDayOfYear(getISODate(windowEnd));
+
+  const seriesMap = buildYearSeries(entries);
+  const lines = years.map((year) => {
+    const daysInYear = getDaysInYear(year);
+    const dailyTotals = seriesMap.get(year) || {};
+    const full = computeCumulativeSeries(dailyTotals, daysInYear);
+    const slice = full.slice(rangeStartDay - 1, rangeEndDay);
+    return { year, slice, full };
+  });
+
+  const svgWidth = 640;
+  const svgHeight = 240;
+  const paddingTop = 20;
+  const paddingRight = 24;
+  const paddingBottom = 28;
+  const paddingLeft = 44;
+  const plotWidth = svgWidth - paddingLeft - paddingRight;
+  const plotHeight = svgHeight - paddingTop - paddingBottom;
+  const windowLength = rangeEndDay - rangeStartDay + 1;
+  const maxValue = Math.max(1, ...lines.flatMap((line) => line.slice));
+  const toX = (index) =>
+    paddingLeft + (index / Math.max(windowLength - 1, 1)) * plotWidth;
+  const toY = (value) => paddingTop + (1 - value / maxValue) * plotHeight;
+
+  const gridCount = 4;
+  for (let i = 0; i <= gridCount; i += 1) {
+    const y = paddingTop + (i / gridCount) * plotHeight;
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.setAttribute("x1", String(paddingLeft));
+    line.setAttribute("x2", String(svgWidth - paddingRight));
+    line.setAttribute("y1", String(y));
+    line.setAttribute("y2", String(y));
+    line.setAttribute("stroke", "#e2e4f6");
+    line.setAttribute("stroke-width", "1");
+    trendMonthChart.appendChild(line);
+
+    const value = Math.round((1 - i / gridCount) * maxValue);
+    const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    label.setAttribute("x", String(paddingLeft - 8));
+    label.setAttribute("y", String(y + 4));
+    label.setAttribute("text-anchor", "end");
+    label.setAttribute("fill", "#6c6f87");
+    label.setAttribute("font-size", "10");
+    label.textContent = formatNumber(value);
+    trendMonthChart.appendChild(label);
+  }
+
+  const colors = ["#3638f4", "#6c6f87", "#b5b9cc"];
+  const currentYear = new Date().getFullYear();
+  const showEstimate = primaryYear === currentYear && compareYears.length > 0;
+  const avgDaily = compareYears.length
+    ? computeAverageDailyTotals(seriesMap, compareYears, getDaysInYear(primaryYear))
+    : null;
+  const elapsedDay = primaryYear === currentYear ? getElapsedDaysInYear(primaryYear) : null;
+
+  lines.forEach((line, index) => {
+    if (!line.slice.length) return;
+    const isPrimary = line.year === primaryYear;
+    const actualEndDay = isPrimary && elapsedDay && elapsedDay < rangeEndDay
+      ? elapsedDay
+      : rangeEndDay;
+    if (actualEndDay >= rangeStartDay) {
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      const d = [];
+      for (let day = rangeStartDay; day <= actualEndDay; day += 1) {
+        const value = line.full[day - 1] || 0;
+        const xIndex = day - rangeStartDay;
+        d.push(`${day === rangeStartDay ? "M" : "L"}${toX(xIndex)} ${toY(value)}`);
+      }
+      path.setAttribute("d", d.join(" "));
+      path.setAttribute("fill", "none");
+      path.setAttribute("stroke", colors[index] || "#b5b9cc");
+      path.setAttribute("stroke-width", index === 0 ? "2.5" : "1.5");
+      path.setAttribute("stroke-linecap", "round");
+      path.setAttribute("stroke-linejoin", "round");
+      trendMonthChart.appendChild(path);
+    }
+
+    if (isPrimary && avgDaily && elapsedDay !== null && elapsedDay < rangeEndDay) {
+      const predictedStartDay = Math.max(elapsedDay + 1, rangeStartDay);
+      const baseValue = line.full[elapsedDay - 1] || 0;
+      let sum = baseValue;
+      const predicted = [];
+      for (let day = predictedStartDay; day <= rangeEndDay; day += 1) {
+        sum += avgDaily[day - 1] || 0;
+        predicted.push({ day, value: sum });
+      }
+      if (predicted.length) {
+        const predictedPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        const predD = predicted
+          .map((item, i) => {
+            const xIndex = item.day - rangeStartDay;
+            return `${i === 0 ? "M" : "L"}${toX(xIndex)} ${toY(item.value)}`;
+          })
+          .join(" ");
+        predictedPath.setAttribute("d", predD);
+        predictedPath.setAttribute("fill", "none");
+        predictedPath.setAttribute("stroke", colors[index] || "#b5b9cc");
+        predictedPath.setAttribute("stroke-width", "2");
+        predictedPath.setAttribute("stroke-linecap", "round");
+        predictedPath.setAttribute("stroke-linejoin", "round");
+        predictedPath.setAttribute("stroke-dasharray", "4 6");
+        predictedPath.setAttribute("opacity", "0.5");
+        trendMonthChart.appendChild(predictedPath);
+      }
+    }
+  });
+
+  if (!lines.some((line) => line.slice.some((value) => value > 0))) {
+    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    text.setAttribute("x", String(svgWidth / 2));
+    text.setAttribute("y", String(svgHeight / 2));
+    text.setAttribute("text-anchor", "middle");
+    text.setAttribute("fill", "#6c6f87");
+    text.textContent = "Nog geen data om te tonen.";
+    trendMonthChart.appendChild(text);
+  }
+
+  renderTrendLegend(trendMonthLegend, years, colors, showEstimate);
+};
+
+const updateTrendView = () => {
+  if (!trendChart || !trendLegend || !trendMonthChart || !trendMonthLegend) return;
+  const showYear = trendView === "year";
+  trendChart.style.display = showYear ? "block" : "none";
+  trendLegend.style.display = showYear ? "flex" : "none";
+  trendMonthChart.style.display = showYear ? "none" : "block";
+  trendMonthLegend.style.display = showYear ? "none" : "flex";
 };
 
 const buildShareUrl = (token) => {
@@ -1722,6 +1899,8 @@ const render = () => {
   updateMonthControls(availableYears);
   renderMonthOverview(entries);
   renderTrendChart(entries);
+  renderMonthTrend(entries);
+  updateTrendView();
   renderCalendar(entries);
 };
 
@@ -1912,6 +2091,19 @@ if (distributionYearSelect) {
   distributionYearSelect.addEventListener("change", () => {
     selectedDistributionYear = distributionYearSelect.value;
     renderDistribution(entries);
+  });
+}
+if (trendSection) {
+  trendSection.addEventListener("click", () => {
+    trendView = trendView === "year" ? "month" : "year";
+    updateTrendView();
+  });
+  trendSection.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      trendView = trendView === "year" ? "month" : "year";
+      updateTrendView();
+    }
   });
 }
 if (calendarPrev) {
