@@ -105,6 +105,12 @@ Je kunt de app deployen naar:
 - **Authenticatie**: Supabase Auth
 - **Real-time**: Supabase Realtime subscriptions
 
+## Strava integratie (optioneel)
+
+Wil je je gelopen kilometers vergelijken met alcoholconsumptie? Dat kan via de Strava API, maar dit vereist een
+server‑side OAuth‑flow. Zie het stappenplan en de voorbeeld Edge Function in
+[`STRAVA_INTEGRATION.md`](./STRAVA_INTEGRATION.md).
+
 ## Bestanden
 
 - `public/index.html` - Hoofd HTML bestand
