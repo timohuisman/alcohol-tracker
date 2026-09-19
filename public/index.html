@@ -126,7 +126,9 @@
       </div>
 
       <section class="card insights">
-        <h2>Inzichten</h2>
+        <div class="section-header">
+          <h2>Inzichten</h2>
+        </div>
         <div class="insight-grid">
           <div>
             <p class="insight-label">Gemiddeld per dag</p>
@@ -140,19 +142,24 @@
             <p class="insight-label">Meest actieve dag</p>
             <p class="insight-value" id="topDay">-</p>
           </div>
+          <div>
+            <p class="insight-label">Trend laatste 7 dagen</p>
+            <p class="insight-value" id="insightsTrend">-</p>
+            <p class="insight-subtle" id="insightsTrendSub"></p>
+          </div>
         </div>
       </section>
 
-      <section class="card microtrend-section">
+      <section class="card microtrend-section" id="microtrendSection" role="button" tabindex="0">
         <div class="section-header">
-          <h2>Kortetermijntrend</h2>
-          <p class="helper">Aantal glazen per dag (laatste 14 dagen) vergeleken met het 8-weeks gemiddelde.</p>
+          <h2>Recente trend</h2>
         </div>
+        <p class="helper" id="microtrendHelper">Aantal glazen per dag (laatste 14 dagen) vergeleken met het 8-weeks gemiddelde. Klik om te wisselen.</p>
         <div class="microtrend-chart">
           <svg id="microtrendChart" viewBox="0 0 420 180" preserveAspectRatio="none" aria-label="14-daagse trend"></svg>
           <div class="microtrend-legend">
-            <span class="microtrend-legend-item"><span class="microtrend-swatch primary"></span>Laatste 14 dagen</span>
-            <span class="microtrend-legend-item"><span class="microtrend-swatch baseline"></span>8-weeks gemiddelde</span>
+            <span class="microtrend-legend-item"><span class="microtrend-swatch primary"></span><span id="microtrendLegendPrimaryLabel">Laatste 14 dagen</span></span>
+            <span class="microtrend-legend-item"><span class="microtrend-swatch baseline"></span><span id="microtrendLegendBaselineLabel">8-weeks gemiddelde</span></span>
             <span class="microtrend-legend-item" id="microtrendLegendWeekend"><span class="microtrend-swatch weekend"></span>Weekend</span>
             <span class="microtrend-legend-item" id="microtrendLegendSpecial"><span class="microtrend-swatch special"></span>1e donderdag</span>
           </div>
@@ -162,8 +169,8 @@
       <section class="card trend-section" id="trendSection" role="button" tabindex="0">
         <div class="section-header">
           <h2>Cumulatief per jaar</h2>
-          <p class="helper">Vergelijking tussen kalenderjaren. Klik om te wisselen.</p>
         </div>
+        <p class="helper">Vergelijking tussen kalenderjaren. Klik om te wisselen.</p>
         <div class="trend-chart">
           <svg id="trendChart" viewBox="0 0 640 240" preserveAspectRatio="none" aria-label="7-daags gemiddelde grafiek"></svg>
           <div id="trendLegend" class="trend-legend"></div>
@@ -173,7 +180,9 @@
       </section>
 
       <section class="card calendar-section">
-        <h2>Kalenderweergave</h2>
+        <div class="section-header">
+          <h2>Kalenderweergave</h2>
+        </div>
         <div class="calendar-controls">
           <button id="calendarPrev" class="ghost small" type="button" aria-label="Vorige maand">←</button>
           <h3 id="calendarTitle" class="calendar-month-title" aria-live="polite"></h3>
@@ -183,7 +192,9 @@
       </section>
 
       <section class="card streak-section">
-        <h2>Streaks</h2>
+        <div class="section-header">
+          <h2>Streaks</h2>
+        </div>
         <div class="insight-grid">
           <div>
             <p class="insight-label">Langste streak zonder drankjes</p>

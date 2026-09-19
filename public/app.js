@@ -32,6 +32,8 @@ const todayTotal = document.getElementById("todayTotal");
 const averagePerDay = document.getElementById("averagePerDay");
 const totalRecorded = document.getElementById("totalRecorded");
 const topDay = document.getElementById("topDay");
+const insightsTrend = document.getElementById("insightsTrend");
+const insightsTrendSub = document.getElementById("insightsTrendSub");
 const calendarContainer = document.getElementById("calendarContainer");
 const calendarTitle = document.getElementById("calendarTitle");
 const calendarPrev = document.getElementById("calendarPrev");
@@ -73,6 +75,10 @@ const distributionYearSelect = document.getElementById("distributionYearSelect")
 const microtrendChart = document.getElementById("microtrendChart");
 const microtrendLegendWeekend = document.getElementById("microtrendLegendWeekend");
 const microtrendLegendSpecial = document.getElementById("microtrendLegendSpecial");
+const microtrendSection = document.getElementById("microtrendSection");
+const microtrendHelper = document.getElementById("microtrendHelper");
+const microtrendLegendPrimaryLabel = document.getElementById("microtrendLegendPrimaryLabel");
+const microtrendLegendBaselineLabel = document.getElementById("microtrendLegendBaselineLabel");
 
 // Authenticatie elementen
 const authModal = document.getElementById("authModal");
@@ -110,6 +116,7 @@ let selectedMonth = new Date().getMonth();
 let selectedMonthYear = new Date().getFullYear();
 let selectedDistributionYear = "all";
 let trendView = "year";
+let microtrendView = "14d";
 
 // Utility functies
 const formatNumber = (value) => value.toLocaleString("nl-NL", {
@@ -398,26 +405,62 @@ const renderDistribution = (entries) => {
   });
 };
 
-const renderMicrotrend = (entries) => {
-  if (!microtrendChart) return;
-  microtrendChart.innerHTML = "";
-
-  const grouped = groupByDay(entries);
-  const today = new Date();
-  const last56 = [];
-  for (let i = 55; i >= 0; i -= 1) {
-    const date = addDays(today, -i);
+const buildDailyTotals = (grouped, today, endOffsetDaysAgo, days) => {
+  const result = [];
+  for (let i = days - 1; i >= 0; i -= 1) {
+    const date = addDays(today, -(endOffsetDaysAgo + i));
     const dateStr = getISODate(date);
     const total = calculateTotal(
       (grouped[dateStr] || []).filter((entry) => Number.isFinite(entry.units)),
     );
-    last56.push({ date, total });
+    result.push({ date, total });
   }
+  return result;
+};
 
-  const last14 = last56.slice(-14);
-  const avg56 = last56.length
-    ? last56.reduce((sum, value) => sum + value.total, 0) / last56.length
-    : 0;
+const average = (items) => (items.length
+  ? items.reduce((sum, item) => sum + item.total, 0) / items.length
+  : 0);
+
+const updateMicrotrendLabels = (isShortView) => {
+  if (microtrendHelper) {
+    microtrendHelper.textContent = isShortView
+      ? "Aantal glazen per dag (laatste 14 dagen) vergeleken met het 8-weeks gemiddelde. Klik om te wisselen."
+      : "Aantal glazen per dag (afgelopen 4 maanden) vergeleken met de 4 maanden daarvoor. Klik om te wisselen.";
+  }
+  if (microtrendLegendPrimaryLabel) {
+    microtrendLegendPrimaryLabel.textContent = isShortView ? "Laatste 14 dagen" : "Afgelopen 4 maanden";
+  }
+  if (microtrendLegendBaselineLabel) {
+    microtrendLegendBaselineLabel.textContent = isShortView ? "8-weeks gemiddelde" : "Vorige 4 maanden gemiddelde";
+  }
+  if (microtrendChart) {
+    microtrendChart.setAttribute("aria-label", isShortView ? "14-daagse trend" : "4-maands trend");
+  }
+};
+
+const renderMicrotrend = (entries) => {
+  if (!microtrendChart) return;
+  microtrendChart.innerHTML = "";
+
+  const isShortView = microtrendView !== "4m";
+  updateMicrotrendLabels(isShortView);
+
+  const grouped = groupByDay(entries);
+  const today = new Date();
+
+  let currentWindow;
+  let baselineValue;
+  if (isShortView) {
+    const last56 = buildDailyTotals(grouped, today, 0, 56);
+    currentWindow = last56.slice(-14);
+    baselineValue = average(last56);
+  } else {
+    currentWindow = buildDailyTotals(grouped, today, 0, 122);
+    const previousWindow = buildDailyTotals(grouped, today, 122, 122);
+    baselineValue = average(previousWindow);
+  }
+  const showMarkers = currentWindow.length <= 31;
 
   const svgWidth = 420;
   const svgHeight = 180;
@@ -428,8 +471,8 @@ const renderMicrotrend = (entries) => {
   const plotWidth = svgWidth - paddingLeft - paddingRight;
   const plotHeight = svgHeight - paddingTop - paddingBottom;
 
-  const maxValue = Math.max(1, avg56, ...last14.map((item) => item.total));
-  const toX = (index) => paddingLeft + (index / Math.max(last14.length - 1, 1)) * plotWidth;
+  const maxValue = Math.max(1, baselineValue, ...currentWindow.map((item) => item.total));
+  const toX = (index) => paddingLeft + (index / Math.max(currentWindow.length - 1, 1)) * plotWidth;
   const toY = (value) => paddingTop + (1 - value / maxValue) * plotHeight;
 
   const gridCount = 3;
@@ -458,18 +501,18 @@ const renderMicrotrend = (entries) => {
   const baseline = document.createElementNS("http://www.w3.org/2000/svg", "line");
   baseline.setAttribute("x1", String(paddingLeft));
   baseline.setAttribute("x2", String(svgWidth - paddingRight));
-  baseline.setAttribute("y1", String(toY(avg56)));
-  baseline.setAttribute("y2", String(toY(avg56)));
+  baseline.setAttribute("y1", String(toY(baselineValue)));
+  baseline.setAttribute("y2", String(toY(baselineValue)));
   baseline.setAttribute("stroke", "#9aa0b5");
   baseline.setAttribute("stroke-width", "2");
   baseline.setAttribute("stroke-dasharray", "4 6");
   microtrendChart.appendChild(baseline);
 
-  if (last14.some((item) => item.total > 0)) {
+  if (currentWindow.some((item) => item.total > 0)) {
     let hasWeekend = false;
     let hasSpecial = false;
     const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    const d = last14
+    const d = currentWindow
       .map((item, i) => `${i === 0 ? "M" : "L"}${toX(i)} ${toY(item.total)}`)
       .join(" ");
     path.setAttribute("d", d);
@@ -480,37 +523,39 @@ const renderMicrotrend = (entries) => {
     path.setAttribute("stroke-linejoin", "round");
     microtrendChart.appendChild(path);
 
-    last14.forEach((item, i) => {
-      const day = item.date.getDay();
-      const isWeekend = day === 0 || day === 6;
-      const isFirstThursday = day === 4 && item.date.getDate() <= 7;
-      if (isWeekend) hasWeekend = true;
-      if (isFirstThursday && item.total > 5) hasSpecial = true;
-      let color = "#3638f4";
-      let radius = 2.5;
-      if (isWeekend) {
-        color = "#f59e0b";
-        radius = 3.5;
-      }
-      if (isFirstThursday && item.total > 5) {
-        color = "#ef4444";
-        radius = 4;
-      }
-      const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-      circle.setAttribute("cx", String(toX(i)));
-      circle.setAttribute("cy", String(toY(item.total)));
-      circle.setAttribute("r", String(radius));
-      circle.setAttribute("fill", color);
-      circle.setAttribute("stroke", "#ffffff");
-      circle.setAttribute("stroke-width", "1");
-      microtrendChart.appendChild(circle);
-    });
+    if (showMarkers) {
+      currentWindow.forEach((item, i) => {
+        const day = item.date.getDay();
+        const isWeekend = day === 0 || day === 6;
+        const isFirstThursday = day === 4 && item.date.getDate() <= 7;
+        if (isWeekend) hasWeekend = true;
+        if (isFirstThursday && item.total > 5) hasSpecial = true;
+        let color = "#3638f4";
+        let radius = 2.5;
+        if (isWeekend) {
+          color = "#f59e0b";
+          radius = 3.5;
+        }
+        if (isFirstThursday && item.total > 5) {
+          color = "#ef4444";
+          radius = 4;
+        }
+        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        circle.setAttribute("cx", String(toX(i)));
+        circle.setAttribute("cy", String(toY(item.total)));
+        circle.setAttribute("r", String(radius));
+        circle.setAttribute("fill", color);
+        circle.setAttribute("stroke", "#ffffff");
+        circle.setAttribute("stroke-width", "1");
+        microtrendChart.appendChild(circle);
+      });
+    }
 
     if (microtrendLegendWeekend) {
-      microtrendLegendWeekend.style.display = hasWeekend ? "inline-flex" : "none";
+      microtrendLegendWeekend.style.display = showMarkers && hasWeekend ? "inline-flex" : "none";
     }
     if (microtrendLegendSpecial) {
-      microtrendLegendSpecial.style.display = hasSpecial ? "inline-flex" : "none";
+      microtrendLegendSpecial.style.display = showMarkers && hasSpecial ? "inline-flex" : "none";
     }
   } else {
     const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
@@ -1279,8 +1324,9 @@ const showShareLink = (token) => {
   shareLinkWrap.style.display = "grid";
 };
 
-const openEntryModal = () => {
+const openEntryModal = (dateStr) => {
   if (isShareMode || !entryModal) return;
+  if (dateStr && entryDate) entryDate.value = dateStr;
   entryModal.style.display = "flex";
   if (entryName) entryName.focus();
 };
@@ -1783,6 +1829,18 @@ const renderCalendar = (entries) => {
         dayElement.classList.add("future");
       }
 
+      if (!isShareMode) {
+        dayElement.setAttribute("role", "button");
+        dayElement.setAttribute("tabindex", "0");
+        dayElement.addEventListener("click", () => openEntryModal(dateStr));
+        dayElement.addEventListener("keydown", (event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            openEntryModal(dateStr);
+          }
+        });
+      }
+
       const dayNumber = document.createElement("div");
       dayNumber.className = "calendar-day-number";
       dayNumber.textContent = dayInfo.day;
@@ -1929,6 +1987,28 @@ const updateInsights = (entries) => {
   topDay.innerHTML = `${formatDate(topEntry.day)} (<span class="drink-count">${formatNumber(
     topEntry.total,
   )}</span>)`;
+
+  if (insightsTrend && insightsTrendSub) {
+    const todayDate = new Date();
+    const last7 = buildDailyTotals(grouped, todayDate, 0, 7);
+    const previous7 = buildDailyTotals(grouped, todayDate, 7, 7);
+    const last7Average = average(last7);
+    const previous7Average = average(previous7);
+    const trendDelta = last7Average - previous7Average;
+
+    if (!previous7Average && !last7Average) {
+      insightsTrend.textContent = "-";
+      insightsTrendSub.textContent = "";
+    } else if (!previous7Average) {
+      insightsTrend.innerHTML = `<span class="drink-count">${formatNumber(last7Average)}</span> / dag`;
+      insightsTrendSub.textContent = "Geen data vorige week";
+    } else {
+      const deltaPercentage = Math.round((trendDelta / previous7Average) * 100);
+      const sign = deltaPercentage > 0 ? "+" : "";
+      insightsTrend.innerHTML = `${sign}<span class="drink-count">${deltaPercentage}%</span>`;
+      insightsTrendSub.textContent = "t.o.v. week ervoor";
+    }
+  }
 };
 
 // Event listeners
@@ -2103,6 +2183,19 @@ if (trendSection) {
       event.preventDefault();
       trendView = trendView === "year" ? "month" : "year";
       updateTrendView();
+    }
+  });
+}
+if (microtrendSection) {
+  microtrendSection.addEventListener("click", () => {
+    microtrendView = microtrendView === "14d" ? "4m" : "14d";
+    renderMicrotrend(entries);
+  });
+  microtrendSection.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      microtrendView = microtrendView === "14d" ? "4m" : "14d";
+      renderMicrotrend(entries);
     }
   });
 }

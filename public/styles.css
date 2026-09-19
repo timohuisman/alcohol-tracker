@@ -508,10 +508,6 @@ button.small {
   outline-offset: 4px;
 }
 
-.trend-section .section-header {
-  align-items: flex-start;
-}
-
 .trend-chart {
   margin-top: 12px;
   display: grid;
@@ -555,8 +551,13 @@ button.small {
   grid-column: 1 / -1;
 }
 
-.microtrend-section .section-header {
-  align-items: flex-start;
+.microtrend-section[role="button"] {
+  cursor: pointer;
+}
+
+.microtrend-section[role="button"]:focus-visible {
+  outline: 2px solid #3638f4;
+  outline-offset: 4px;
 }
 
 .microtrend-chart {
