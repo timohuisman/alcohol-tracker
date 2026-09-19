@@ -523,39 +523,40 @@ const renderMicrotrend = (entries) => {
     path.setAttribute("stroke-linejoin", "round");
     microtrendChart.appendChild(path);
 
-    if (showMarkers) {
-      currentWindow.forEach((item, i) => {
-        const day = item.date.getDay();
-        const isWeekend = day === 0 || day === 6;
-        const isFirstThursday = day === 4 && item.date.getDate() <= 7;
-        if (isWeekend) hasWeekend = true;
-        if (isFirstThursday && item.total > 5) hasSpecial = true;
-        let color = "#3638f4";
-        let radius = 2.5;
-        if (isWeekend) {
-          color = "#f59e0b";
-          radius = 3.5;
-        }
-        if (isFirstThursday && item.total > 5) {
-          color = "#ef4444";
-          radius = 4;
-        }
-        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        circle.setAttribute("cx", String(toX(i)));
-        circle.setAttribute("cy", String(toY(item.total)));
-        circle.setAttribute("r", String(radius));
-        circle.setAttribute("fill", color);
-        circle.setAttribute("stroke", "#ffffff");
-        circle.setAttribute("stroke-width", "1");
-        microtrendChart.appendChild(circle);
-      });
-    }
+    currentWindow.forEach((item, i) => {
+      const day = item.date.getDay();
+      const isWeekend = day === 0 || day === 6;
+      const isSpecial = day === 4 && item.date.getDate() <= 7 && item.total > 5;
+      if (isWeekend) hasWeekend = true;
+      if (isSpecial) hasSpecial = true;
+
+      if (!showMarkers && !isWeekend && !isSpecial) return;
+
+      let color = "#3638f4";
+      let radius = 2.5;
+      if (isWeekend) {
+        color = "#f59e0b";
+        radius = 3.5;
+      }
+      if (isSpecial) {
+        color = "#ef4444";
+        radius = 4;
+      }
+      const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      circle.setAttribute("cx", String(toX(i)));
+      circle.setAttribute("cy", String(toY(item.total)));
+      circle.setAttribute("r", String(radius));
+      circle.setAttribute("fill", color);
+      circle.setAttribute("stroke", "#ffffff");
+      circle.setAttribute("stroke-width", "1");
+      microtrendChart.appendChild(circle);
+    });
 
     if (microtrendLegendWeekend) {
-      microtrendLegendWeekend.style.display = showMarkers && hasWeekend ? "inline-flex" : "none";
+      microtrendLegendWeekend.style.display = hasWeekend ? "inline-flex" : "none";
     }
     if (microtrendLegendSpecial) {
-      microtrendLegendSpecial.style.display = showMarkers && hasSpecial ? "inline-flex" : "none";
+      microtrendLegendSpecial.style.display = hasSpecial ? "inline-flex" : "none";
     }
   } else {
     const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
