@@ -41,6 +41,9 @@ jobs:
           const SUPABASE_ANON_KEY = "${SUPABASE_ANON_KEY}";
           EOF
 
+      - name: Set service worker cache version
+        run: sed -i "s/__CACHE_VERSION__/${GITHUB_SHA::7}/" public/service-worker.js
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

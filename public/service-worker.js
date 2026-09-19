@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v3";
+const CACHE_VERSION = "__CACHE_VERSION__";
 const STATIC_CACHE = `alcohol-tracker-static-${CACHE_VERSION}`;
 const BASE_URL = self.registration.scope;
 
@@ -60,7 +60,13 @@ self.addEventListener("fetch", (event) => {
 
   if (isSameOrigin) {
     event.respondWith(
-      caches.match(request).then((cached) => cached || fetch(request))
+      fetch(request)
+        .then((response) => {
+          const responseClone = response.clone();
+          caches.open(STATIC_CACHE).then((cache) => cache.put(request, responseClone));
+          return response;
+        })
+        .catch(() => caches.match(request))
     );
   }
 });

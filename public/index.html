@@ -353,7 +353,16 @@
           .then(() => loadScript("app.js"))
           .then(() => {
             if ("serviceWorker" in navigator) {
-              navigator.serviceWorker.register("service-worker.js").catch((error) => {
+              let refreshing = false;
+              navigator.serviceWorker.addEventListener("controllerchange", () => {
+                if (refreshing) return;
+                refreshing = true;
+                window.location.reload();
+              });
+
+              navigator.serviceWorker.register("service-worker.js").then((registration) => {
+                registration.update();
+              }).catch((error) => {
                 console.warn("Service worker registratie mislukt", error);
               });
             }
