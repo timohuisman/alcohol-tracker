@@ -1966,13 +1966,13 @@ const updateInsights = (entries) => {
   const grouped = groupByDay(entries);
   const days = Object.keys(grouped);
   const total = calculateTotal(entries);
-  const average = days.length ? total / days.length : 0;
+  const dailyAverage = days.length ? total / days.length : 0;
   const today = new Date().toISOString().slice(0, 10);
   const todayEntries = grouped[today] || [];
   const todayCount = calculateTotal(todayEntries);
 
   todayTotal.textContent = formatNumber(todayCount || 0);
-  averagePerDay.textContent = formatNumber(average || 0);
+  averagePerDay.textContent = formatNumber(dailyAverage || 0);
   totalRecorded.textContent = formatNumber(total || 0);
 
   if (!days.length) {
