@@ -1,3 +1,4 @@
 dist/
 public/supabase-config.local.js
 data/
+.claude/
