@@ -1346,14 +1346,67 @@ const generateShareToken = () => {
   return `${Date.now().toString(16)}${Math.random().toString(16).slice(2)}`;
 };
 
+// Toast voor feedback buiten de auth-modal om (bv. na een mislukte snelle toevoeging)
+let toastTimeoutId = null;
+const showToast = (message) => {
+  let toast = document.getElementById('appToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'appToast';
+    toast.setAttribute('role', 'alert');
+    toast.style.cssText =
+      'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);' +
+      'background:#1c1d2a;color:#fff;padding:12px 18px;border-radius:12px;' +
+      'font-size:14px;max-width:min(90vw,420px);box-shadow:0 12px 24px rgba(0,0,0,0.25);' +
+      'z-index:2000;text-align:center;';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = message;
+  toast.style.display = 'block';
+  clearTimeout(toastTimeoutId);
+  toastTimeoutId = setTimeout(() => {
+    toast.style.display = 'none';
+  }, 4000);
+};
+
 // Authenticatie functies
 const showAuthError = (message) => {
   authError.textContent = message;
   authError.style.display = 'block';
+  // De auth-modal is niet altijd zichtbaar (bv. bij de snelle-toevoegknop terwijl je
+  // al bent ingelogd), dus zonder toast blijft de foutmelding dan onzichtbaar.
+  if (!authModal || authModal.style.display !== 'flex') {
+    showToast(message);
+  }
 };
 
 const hideAuthError = () => {
   authError.style.display = 'none';
+};
+
+// Herkent Supabase-foutmeldingen die duiden op een verlopen/ongeldige sessie,
+// zodat we de gebruiker automatisch terug naar de login-modal kunnen sturen
+// in plaats van een fout te tonen die alleen met opnieuw inloggen op te lossen is.
+const isSessionExpiredError = (error) => {
+  const text = `${error?.message || ''} ${error?.code || ''}`.toLowerCase();
+  return (
+    text.includes('jwt') ||
+    text.includes('token') ||
+    text.includes('unauthorized') ||
+    text.includes('not authenticated') ||
+    text.includes('invalid claim')
+  );
+};
+
+// Voor fouten tijdens data-acties (toevoegen/verwijderen/laden) terwijl de
+// login-modal niet per se open staat: toont de fout en heropent de login-modal
+// als blijkt dat de sessie is verlopen.
+const showActionError = (error, fallbackMessage) => {
+  showAuthError(fallbackMessage + (error?.message ? ': ' + error.message : ''));
+  if (isSessionExpiredError(error)) {
+    showToast('Je sessie is verlopen. Log opnieuw in.');
+    showAuthModal();
+  }
 };
 
 const showAuthModal = () => {
@@ -1491,7 +1544,7 @@ const loadEntries = async () => {
     render();
   } catch (error) {
     console.error('Fout bij laden entries:', error);
-    showAuthError('Kon gegevens niet laden: ' + error.message);
+    showActionError(error, 'Kon gegevens niet laden');
   }
 };
 
@@ -1560,7 +1613,7 @@ const createShareLink = async () => {
       shareLinkStatus.textContent = `Kon deel-link niet maken: ${error.message}`;
       shareLinkStatus.style.display = "block";
     } else {
-      showAuthError('Kon deel-link niet maken: ' + error.message);
+      showActionError(error, 'Kon deel-link niet maken');
     }
   }
 };
@@ -1649,7 +1702,7 @@ const addEntry = async (entry) => {
     render();
   } catch (error) {
     console.error('Fout bij toevoegen entry:', error);
-    showAuthError('Kon entry niet toevoegen: ' + error.message);
+    showActionError(error, 'Kon entry niet toevoegen');
   }
 };
 
@@ -1670,7 +1723,7 @@ const deleteEntry = async (entryId) => {
     render();
   } catch (error) {
     console.error('Fout bij verwijderen entry:', error);
-    showAuthError('Kon entry niet verwijderen: ' + error.message);
+    showActionError(error, 'Kon entry niet verwijderen');
   }
 };
 
@@ -1691,7 +1744,7 @@ const deleteDayEntries = async (date) => {
     render();
   } catch (error) {
     console.error('Fout bij verwijderen dag:', error);
-    showAuthError('Kon dag niet verwijderen: ' + error.message);
+    showActionError(error, 'Kon dag niet verwijderen');
   }
 };
 
